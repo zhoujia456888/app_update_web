@@ -1,5 +1,9 @@
 <template>
-  <UApp>
-    <NuxtPage />
+  <UApp :toaster="toaster">
+    <NuxtPage/>
   </UApp>
 </template>
+
+<script setup lang="ts">
+const toaster = {position: 'top-right'}
+</script>
