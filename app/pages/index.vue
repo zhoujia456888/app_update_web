@@ -1,21 +1,43 @@
-<!-- pages/index.vue -->
 <template>
-  <div class="p-6 space-y-4">
-    <div class="text-2xl font-semibold">首页</div>
-
+  <div class="space-y-4">
     <UCard>
-      <div class="space-y-2">
-        <div>已登录 ✅</div>
-        <div class="text-sm text-gray-500">token 存在 cookie：{{ access_token ? 'yes' : 'no' }}</div>
+      <template #header>
+        <div class="flex items-center justify-between">
+          <div class="font-semibold">最近活动</div>
+        </div>
+      </template>
 
-        <div class="flex gap-2">
-          <UButton loading-auto @click="logout">退出登录</UButton>
+      <div class="space-y-3 text-sm">
+        <div class="flex items-center justify-between">
+          <span>用户 A 登录</span><span class="text-gray-500">2 分钟前</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>创建了订单 #1024</span><span class="text-gray-500">10 分钟前</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>更新了系统配置</span><span class="text-gray-500">1 小时前</span>
         </div>
       </div>
     </UCard>
   </div>
 </template>
 
+
 <script setup lang="ts">
-const {access_token, logout} = useAuth()
+import {user_api} from "~/api/user_api";
+import toast from "~/composables/toast";
+
+const api = user_api()
+
+onMounted(getUserInfo)
+
+async function getUserInfo() {
+  const userInfoRes = await api.getUserInfo()
+  if (userInfoRes.data.code !== 200) {
+    toast.error('获取用户信息失败,请重试!', userInfoRes.data.msg || '获取用户信息失败,请重试!')
+    return;
+  }
+  // 登录成功后，将用户信息存储到 localStorage
+  localStorage.setItem('user_info', JSON.stringify(userInfoRes.data.data))
+}
 </script>

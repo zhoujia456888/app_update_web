@@ -48,16 +48,15 @@
 
           <!-- 验证码：输入 + 图片同一行 -->
           <div class="flex items-end gap-3">
-            <div class="flex-1">
+            <div class="w-60 flex-1">
               <UInput
                   v-model="form.captcha_code"
                   size="lg"
+                  class="w-full"
                   placeholder="请输入验证码"
                   autocomplete="off"
+                  icon="i-lucide-shield-check"
               >
-                <template #leading>
-                  <UIcon name="i-lucide-shield-check" class="text-gray-400"/>
-                </template>
               </UInput>
 
             </div>
@@ -65,22 +64,14 @@
             <div class="w-32">
               <button
                   type="button"
-                  class="h-11 w-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-center"
+                  class="h-10 w-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-center"
                   @click="refreshCaptcha"
                   :disabled="captchaLoading"
               >
-                <div v-if="captchaLoading" class="text-xs text-gray-400">加载中…</div>
+                <span v-if="captchaLoading" class="text-xs text-gray-400">加载中…</span>
                 <img v-else :src="captchaImg" class="h-full w-full object-cover" alt="captcha"/>
               </button>
             </div>
-          </div>
-
-          <!-- 错误提示 -->
-          <div
-              v-if="error"
-              class="text-sm text-red-600 bg-red-50 dark:bg-red-950/30 px-3 py-2 rounded-xl"
-          >
-            {{ error }}
           </div>
 
           <!-- 操作按钮 -->
@@ -114,16 +105,17 @@
 </template>
 
 <script setup lang="ts">
-import type {LoginReq} from '~/types/auth'
-import {authApi} from "~/api/auth";
-import type {ToastProps} from "@nuxt/ui/components/Toast.vue";
 
-const api = authApi()
+import type {LoginReq} from '~/types/user'
+import {user_api} from "~/api/user_api";
+import toast from "~/composables/toast";
+//登录页面不使用默认布局
+definePageMeta({layout: false})
+const api = user_api()
 
 const showPwd = ref(false)
 const loading = ref(false)
 const captchaLoading = ref(false)
-const error = ref('')
 
 const captchaImg = ref('')
 const captchaId = ref('')
@@ -136,20 +128,12 @@ const form = reactive<LoginReq>({
 })
 
 
-const toast = useToast()
-
-
 async function refreshCaptcha() {
-  error.value = ''
   captchaLoading.value = true
   try {
     const res = await api.getCaptcha()
     if (res.data.code !== 200) {
-      toast.add({
-        title: '获取验证码失败',
-        description: res.data.msg || '获取验证码失败',
-        color: 'error'
-      })
+      toast.error('获取验证码失败', res.data.msg || '获取验证码失败')
       return;
     }
 
@@ -159,7 +143,11 @@ async function refreshCaptcha() {
     form.captcha_id = captchaId.value
     form.captcha_code = ''
   } catch (e: any) {
-    error.value = e?.message || '获取验证码失败'
+    let errorMessage = '获取验证码失败'
+    if (e?.response?.data?.msg) {
+      errorMessage = e.response.data.msg
+    }
+    toast.error('获取验证码失败', errorMessage)
   } finally {
     captchaLoading.value = false
   }
@@ -168,39 +156,22 @@ async function refreshCaptcha() {
 onMounted(refreshCaptcha)
 
 async function onLogin() {
-  error.value = ''
   loading.value = true
   try {
     if (!form.username.trim()) {
-      toast.add({
-        title: '登录失败',
-        description: '请输入用户名',
-        color: 'error'
-      })
+      toast.error('登录失败', '请输入用户名')
       return;
     }
     if (!form.password.trim()) {
-      toast.add({
-        title: '登录失败',
-        description: '请输入密码',
-        color: 'error'
-      })
+      toast.error('登录失败', '请输入密码')
       return;
     }
     if (!form.captcha_code.trim()) {
-      toast.add({
-        title: '登录失败',
-        description: '请输入验证码',
-        color: 'error'
-      })
+      toast.error('登录失败', '请输入验证码')
       return;
     }
     if (!form.captcha_id) {
-      toast.add({
-        title: '登录失败',
-        description: '验证码无效，请刷新',
-        color: 'error'
-      })
+      toast.error('登录失败', '验证码无效，请刷新')
       return;
     }
 
@@ -211,23 +182,23 @@ async function onLogin() {
       captcha_code: form.captcha_code.trim()
     })
 
-    console.log(res)
-
     if (res.data.code !== 200) {
-      toast.add({
-        title: '登录失败',
-        description: res.data.msg || '登录失败',
-        color: 'error'
-      })
+      toast.error('登录失败', res.data.msg || '登录失败')
       return;
     }
-
-    const token = useCookie<string | null>('token', {sameSite: 'lax'})
-    token.value = res.data.data.access_token
-
-    await navigateTo('/')
+    // 登录成功后，将 access_token 和 refresh_token 存储到 localStorage
+    localStorage.setItem('access_token', res.data.data.access_token)
+    localStorage.setItem('refresh_token', res.data.data.refresh_token)
+    toast.success('登录成功', res.data.data.login_info || '登录成功')
+    // 使用 replace: true 确保路由正确跳转
+    await navigateTo('/', {replace: true})
   } catch (e: any) {
-    error.value = e?.message || '登录失败'
+    console.log(e)
+    let errorMessage = '登录失败'
+    if (e?.response?.data?.msg) {
+      errorMessage = e.response.data.msg
+    }
+    toast.error('登录失败', errorMessage)
     await refreshCaptcha()
   } finally {
     loading.value = false
