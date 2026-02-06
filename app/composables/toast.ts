@@ -18,16 +18,16 @@ function ensureToast() {
 }
 
 const toast = {
-    success(message: string, title: string = '成功') {
+    success(title: string = '成功',message: string) {
         return ensureToast().add({ title, description: message, color: 'success' })
     },
-    error(message: string, title: string = '错误') {
+    error(title: string = '错误',message: string) {
         return ensureToast().add({ title, description: message, color: 'error' })
     },
-    warning(message: string, title: string = '警告') {
+    warning(title: string = '警告',message: string) {
         return ensureToast().add({ title, description: message, color: 'warning' })
     },
-    info(message: string, title: string = '提示') {
+    info(title: string = '提示',message: string) {
         return ensureToast().add({ title, description: message, color: 'info' })
     },
     add(options: any) {

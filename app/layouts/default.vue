@@ -17,7 +17,7 @@
 
         <UPopover mode="hover">
           <UButton color="neutral" variant="ghost">
-            <UUser name="John Doe"/>
+            <UUser :name="username"/>
             <template #trailing>
               <UIcon name="i-lucide-chevron-down"/>
             </template>
@@ -52,6 +52,23 @@
 
 
 <script setup lang="ts">
+
+const username = ref('用户')
+
+// 从localStorage获取用户名
+onMounted(() => {
+  try {
+    const userInfoStr = localStorage.getItem('user_info')
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr)
+      // 根据实际数据结构调整用户名获取方式
+      username.value = userInfo.username || userInfo.name || '用户'
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+})
+
 
 /**
  * 菜单数据：支持父级 children

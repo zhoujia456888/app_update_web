@@ -24,3 +24,17 @@ export type RefreshTokenReq = {
     access_token: string
     refresh_token: string
 }
+
+/*** 注册请求参数 */
+export type RegisterReq = {
+    username: string
+    password: string
+    confirm_password: string
+    captcha_id: string
+    captcha_code: string
+}
+
+/*** 注册返回参数 */
+export type RegisterResp = {
+    register_info: string
+}

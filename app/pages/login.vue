@@ -105,10 +105,10 @@
 </template>
 
 <script setup lang="ts">
-
 import type {LoginReq} from '~/types/user'
 import {user_api} from "~/api/user_api";
 import toast from "~/composables/toast";
+import type {AxiosResponse} from "axios";
 //登录页面不使用默认布局
 definePageMeta({layout: false})
 const api = user_api()
@@ -186,12 +186,13 @@ async function onLogin() {
       toast.error('登录失败', res.data.msg || '登录失败')
       return;
     }
+
     // 登录成功后，将 access_token 和 refresh_token 存储到 localStorage
     localStorage.setItem('access_token', res.data.data.access_token)
     localStorage.setItem('refresh_token', res.data.data.refresh_token)
-    toast.success('登录成功', res.data.data.login_info || '登录成功')
-    // 使用 replace: true 确保路由正确跳转
-    await navigateTo('/', {replace: true})
+
+    await getUserInfo(res)
+
   } catch (e: any) {
     console.log(e)
     let errorMessage = '登录失败'
@@ -205,7 +206,21 @@ async function onLogin() {
   }
 }
 
+
+async function getUserInfo(loginRes: AxiosResponse) {
+  const userInfoRes = await api.getUserInfo()
+  if (userInfoRes.data.code !== 200) {
+    toast.error('获取用户信息失败,请重试!', userInfoRes.data.msg || '获取用户信息失败,请重试!')
+    return;
+  }
+  // 登录成功后，将用户信息存储到 localStorage
+  localStorage.setItem('user_info', JSON.stringify(userInfoRes.data.data))
+  toast.success('登录成功', loginRes.data.data.login_info || '登录成功')
+  // 使用 replace: true 确保路由正确跳转
+  await navigateTo('/', {replace: true})
+}
+
 function goRegister() {
-  navigateTo('/register')
+  navigateTo('/register', {replace: true})
 }
 </script>

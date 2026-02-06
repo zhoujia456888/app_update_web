@@ -24,20 +24,4 @@
 
 
 <script setup lang="ts">
-import {user_api} from "~/api/user_api";
-import toast from "~/composables/toast";
-
-const api = user_api()
-
-onMounted(getUserInfo)
-
-async function getUserInfo() {
-  const userInfoRes = await api.getUserInfo()
-  if (userInfoRes.data.code !== 200) {
-    toast.error('获取用户信息失败,请重试!', userInfoRes.data.msg || '获取用户信息失败,请重试!')
-    return;
-  }
-  // 登录成功后，将用户信息存储到 localStorage
-  localStorage.setItem('user_info', JSON.stringify(userInfoRes.data.data))
-}
 </script>
