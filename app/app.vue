@@ -1,13 +1,19 @@
 <template>
   <UApp :toaster="toaster">
     <NuxtLayout>
-      <NuxtPage />
+      <NuxtPage/>
     </NuxtLayout>
   </UApp>
 </template>
 
 <script setup lang="ts">
-const t = useToast()
-setToastApi(t)
-const toaster = {position: 'top-right'  as const}
+const toaster = {
+  position: 'top-right' as const,
+  expand: false
+}
+
+onMounted(() => {
+  setToastApi(useToast())
+})
 </script>
+

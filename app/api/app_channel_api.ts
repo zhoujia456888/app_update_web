@@ -1,7 +1,7 @@
 import type {BaseResp} from "~/types/base_response";
 import type {
     CreateAppChannelReq,
-    CreateAppChannelResp, DeleteAppChannelReq, DeleteAppChannelResp,
+    CreateAppChannelResp, DeleteAppChannelReq, DeleteAppChannelResp, GetAppChannelListReq,
     GetAppChannelListResp,
     UpdateAppChannelReq,
     UpdateAppChannelResp
@@ -16,8 +16,8 @@ export function app_channel_api() {
             return $api.post<BaseResp<CreateAppChannelResp>>('/app_channel/create_app_channel', data)
         },
         /** 获取当前账户下的所有渠道接口 */
-        get_app_channel_list() {
-            return $api.post<BaseResp<GetAppChannelListResp[]>>('/app_channel/get_app_channel_list')
+        get_app_channel_list(data: GetAppChannelListReq) {
+            return $api.post<BaseResp<GetAppChannelListResp[]>>('/app_channel/get_app_channel_list', data)
         },
         /** 更新应用渠道接口 */
         update_app_channel(data: UpdateAppChannelReq) {

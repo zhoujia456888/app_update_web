@@ -27,6 +27,10 @@ export default defineNuxtPlugin(() => {
     api.interceptors.response.use(
         (res) => res,
         (err) => {
+            // 处理超时错误
+            if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+                toast.error('请求超时', '网络连接超时，请检查网络后重试')
+            }
             // 常见：token 过期/无效
             if (err?.response?.status === 401) {
                 localStorage.removeItem('access_token')

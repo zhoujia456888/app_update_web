@@ -12,11 +12,19 @@ export type CreateAppChannelResp = {
     create_info: string
 }
 
+/***获取当前账户下的所有渠道请求参数 */
+export type GetAppChannelListReq = {
+    page_index: number
+    page_size: number
+}
+
+
 /***获取当前账户下的所有渠道返回参数 */
 export type GetAppChannelListResp = {
     channel_id: string
     channel_name: string
     create_time: string
+    update_time: string
 }
 
 /***更新应用渠道请求参数 */
