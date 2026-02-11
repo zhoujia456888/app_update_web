@@ -1,6 +1,8 @@
 // plugins/axios.ts
 import axios from 'axios'
 import {user_api} from "~/api/user_api";
+import type {RefreshTokenReq, RefreshTokenResp} from "~/types/user";
+import type {BaseResp} from "~/types/base_response";
 
 const refreshApi = axios.create({
     baseURL: '/api',
@@ -43,7 +45,11 @@ export default defineNuxtPlugin(() => {
                 // 调用刷新token接口
                 const refresh_token = localStorage.getItem('refresh_token')
                 if (refresh_token) {
-                    refreshApi.post('/users/refresh_token', { refresh_token }).then((res) => {
+                    const user_id = JSON.parse(localStorage.getItem('user_info') || '{}')?.id
+                    refreshApi.post<BaseResp<RefreshTokenResp>>('/users/refresh_token', {
+                        user_id: user_id,
+                        refresh_token: refresh_token
+                    }).then((res) => {
                         if (res.data.code == 200) {
                             localStorage.setItem('access_token', res.data.data.access_token)
                             localStorage.setItem('refresh_token', res.data.data.refresh_token)
@@ -53,7 +59,7 @@ export default defineNuxtPlugin(() => {
                             return api(err.config)
                         }
                     })
-                }else{
+                } else {
                     localStorage.removeItem('access_token')
                     localStorage.removeItem('refresh_token')
                     window.location.href = '/login'

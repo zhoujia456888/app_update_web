@@ -20,10 +20,18 @@ export type CaptchaData = {
     captcha_img: string // 已经是 data:image/jpeg;base64,...
 }
 
+/*** 刷新token请求参数 */
 export type RefreshTokenReq = {
+    user_id: string
+    refresh_token: string
+}
+
+/*** 刷新token返回参数 */
+export type RefreshTokenResp = {
     access_token: string
     refresh_token: string
 }
+
 
 /*** 注册请求参数 */
 export type RegisterReq = {

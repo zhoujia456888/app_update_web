@@ -1,5 +1,5 @@
 // app/api/user_api.ts
-import type {CaptchaData, LoginReq, LoginResponse, RefreshTokenReq, RegisterReq, RegisterResp} from '~/types/user'
+import type {CaptchaData, LoginReq, LoginResponse, RefreshTokenReq, RefreshTokenResp, RegisterReq, RegisterResp} from '~/types/user'
 import type {BaseResp} from "~/types/base_response";
 
 export function user_api() {
@@ -27,9 +27,5 @@ export function user_api() {
             return $api.post<BaseResp<LoginResponse>>('/users/get_users_info')
         },
 
-        /** 刷新token接口 */
-        refreshToken(data: { refresh_token: string }) {
-            return $api.post<BaseResp<RefreshTokenReq>>('/users/refresh_token', data)
-        },
     }
 }
