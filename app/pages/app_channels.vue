@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col py-3.5 ma h-full">
+  <div class="flex flex-col py-3.5 ma h-full min-h-0">
 
     <div class="flex items-center justify-between px-4">
       <div class="font-semibold">App渠道管理</div>
@@ -27,63 +27,73 @@
     ]"
       />
     </div>
-    <div v-else class="flex flex-col flex-1 px-4">
-      <div class=" flex py-3.5 border-b border-accented items-end justify-end  gap-4">
-        <UInput v-model="globalFilter" placeholder="搜索渠道名称..."/>
-        <UButton icon="i-lucide-plus"
-                 color="primary"
-                 variant="solid"
-                 label="添加渠道"
-                 @click="showAddAppChannelModal()"
-        />
+    <div v-else class="flex flex-col flex-1 px-4  min-h-0">
+      <div class="py-3.5 border-b border-accented">
+        <div class="flex items-center justify-end gap-4">
+          <UInput v-model="globalFilter" placeholder="搜索渠道名称..."/>
+          <UButton icon="i-lucide-plus"
+                   color="primary"
+                   variant="solid"
+                   label="添加渠道"
+                   @click="showAddAppChannelModal()"
+          />
 
+        </div>
       </div>
+      <div class="flex-1 flex flex-col min-h-0">
+        <!-- UTable 部分 -->
+          <UTable sticky
+                  v-model:page-index="pageIndex"
+                  v-model:page-size="pageSize"
+                  v-model:global-filter="globalFilter"
+                  :data="appChannelList"
+                  :columns="columns"
+                  :pagination-options="{getPaginationRowModel: getPaginationRowModel()}"
+                  class="flex-1 overflow-auto">
+            <template #name-cell="{ row }">
+              <div>
+                <p class="w-1.5">
+                  {{ row.original.channel_id }}
+                </p>
+                <p>
+                  {{ row.original.channel_name }}
+                </p>
+                <p>
+                  {{ row.original.create_time }}
+                </p>
+              </div>
+            </template>
+            <template #action-cell="{ row }">
+              <div class="flex gap-2">
+                <UButton
+                    icon="i-lucide-edit"
+                    color="neutral"
+                    variant="ghost"
+                    aria-label="Actions"
+                    @click="showEditAppChannelModal(row.original)"
+                />
+                <UButton
+                    icon="i-lucide-trash"
+                    color="error"
+                    variant="ghost"
+                    aria-label="Actions"
+                    @click="showDeleteAppChannelModal(row.original)"
+                />
+              </div>
+            </template>
+          </UTable>
 
-      <UTable ref="table"
-              v-model:pagination="pagination"
-              v-model:global-filter="globalFilter"
-              :data="appChannelList"
-              :columns="columns"
-              :pagination-options="{getPaginationRowModel: getPaginationRowModel()}"
-              class="flex-1 mt-2 ">
-        <template #name-cell="{ row }">
-          <div>
-            <p class="w-1.5">
-              {{ row.original.channel_id }}
-            </p>
-            <p>
-              {{ row.original.channel_name }}
-            </p>
-            <p>
-              {{ row.original.create_time }}
-            </p>
-          </div>
-        </template>
-        <template #action-cell="{ row }">
-          <UButton
-              icon="i-lucide-edit"
-              color="neutral"
-              variant="ghost"
-              aria-label="Actions"
-              @click="showEditAppChannelModal(row.original)"
+        <div class="flex justify-end border-t border-default pt-4 px-4">
+          <UPagination
+              :page="pageIndex + 1"
+              :items-per-page="pageSize"
+              :total="totalChannelCount"
+              @update:page="(p) =>{
+               pageIndex = p - 1
+                 getAppChannelList()
+            }"
           />
-          <UButton
-              icon="i-lucide-trash"
-              color="error"
-              variant="ghost"
-              aria-label="Actions"
-              @click="showDeleteAppChannelModal(row.original)"
-          />
-        </template>
-      </UTable>
-
-      <div class="flex justify-end border-t border-default pt-4 px-4">
-        <UPagination
-            :page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-            :total="table?.tableApi?.getFilteredRowModel().rows.length"
-            @update:page="(p) => table?.tableApi?.setPageIndex(p - 1)"
-        />
+        </div>
       </div>
     </div>
   </div>
@@ -120,32 +130,30 @@
 
 <script setup lang="ts">
 import {app_channel_api} from "~/api/app_channel_api";
-import type {GetAppChannelListResp} from "~/types/app_channel";
+import type {GetAppChannelListResp, GetAppChannelListRespItem} from "~/types/app_channel";
 import type {TableColumn} from '@nuxt/ui'
 import {getPaginationRowModel} from '@tanstack/vue-table'
 import toast from "~/composables/toast";
 
 const showInputAppChannelNameModal = ref(false)
 const isAddChannelModal = ref(true)
-const updateAppChannelObj = ref<GetAppChannelListResp>()
+const updateAppChannelObj = ref<GetAppChannelListRespItem>()
 const channelName = ref('')
 const api = app_channel_api()
-const appChannelList = ref<GetAppChannelListResp[]>([])
+const appChannelList = ref<GetAppChannelListRespItem[]>([])
 const globalFilter = ref('')
-const table = useTemplateRef('table')
 
 const isShowDeleteAppChannelModal = ref(false)
-const deleteAppChannelObj = ref<GetAppChannelListResp>()
+const deleteAppChannelObj = ref<GetAppChannelListRespItem>()
+const totalChannelCount = ref(0)
+const pageTotal = ref(0)
 
-
-const pagination = ref({
-  pageIndex: 0,
-  pageSize: 5
-})
+const pageIndex = ref(0)
+const pageSize = ref(5)
 
 onMounted(getAppChannelList)
 
-const columns: TableColumn<GetAppChannelListResp>[] = [
+const columns: TableColumn<GetAppChannelListRespItem>[] = [
   {
     accessorKey: 'channel_id',
     header: '渠道Id',
@@ -180,15 +188,22 @@ const columns: TableColumn<GetAppChannelListResp>[] = [
 
 /** 获取当前账户下的所有渠道 */
 async function getAppChannelList() {
-  const res = await api.get_app_channel_list({
-    page_index: pagination.value.pageIndex,
-    page_size: pagination.value.pageSize,
+  const res = await api.get_app_channel_list_by_page({
+    page_index: pageIndex.value,
+    page_size: pageSize.value,
   })
   if (res.data.code !== 200) {
     toast.error('获取渠道列表失败', res.data.msg || '获取渠道列表失败')
     return;
   }
-  appChannelList.value = res.data.data
+  console.log(res.data.data)
+
+  let resp: GetAppChannelListResp = res.data.data as GetAppChannelListResp
+  console.log(resp)
+  pageTotal.value = resp.total_page_count || 0
+  console.log(pageTotal)
+  totalChannelCount.value = resp.total_channel_count || 0
+  appChannelList.value = resp.channel_list || []
   if (appChannelList.value.length === 0) {
     toast.info('暂无渠道数据', '暂无渠道数据')
   }
@@ -198,6 +213,7 @@ async function getAppChannelList() {
 async function showAddAppChannelModal() {
   channelName.value = ''
   showInputAppChannelNameModal.value = true
+  isAddChannelModal.value = true
 }
 
 async function createAppChannel() {
@@ -230,7 +246,7 @@ async function createAppChannel() {
 
 }
 
-async function showEditAppChannelModal(appChannel: GetAppChannelListResp) {
+async function showEditAppChannelModal(appChannel: GetAppChannelListRespItem) {
   isAddChannelModal.value = false
   channelName.value = appChannel.channel_name
   showInputAppChannelNameModal.value = true
@@ -267,7 +283,7 @@ async function updateAppChannel() {
   }
 }
 
-async function showDeleteAppChannelModal(appChannel: GetAppChannelListResp) {
+async function showDeleteAppChannelModal(appChannel: GetAppChannelListRespItem) {
   isShowDeleteAppChannelModal.value = true
   deleteAppChannelObj.value = appChannel
 }

@@ -21,5 +21,9 @@ export default defineNuxtConfig({
                 changeOrigin: true
             }
         }
+    },
+    sourcemap: {
+        server: true,
+        client: true
     }
 })

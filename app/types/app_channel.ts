@@ -21,11 +21,19 @@ export type GetAppChannelListReq = {
 
 /***获取当前账户下的所有渠道返回参数 */
 export type GetAppChannelListResp = {
+    channel_list: GetAppChannelListRespItem[]
+    total_channel_count: number
+    total_page_count: number
+}
+
+/***获取当前账户下的所有渠道返回参数中的每个渠道项 */
+export type GetAppChannelListRespItem = {
     channel_id: string
     channel_name: string
     create_time: string
     update_time: string
 }
+
 
 /***更新应用渠道请求参数 */
 export type UpdateAppChannelReq = {
