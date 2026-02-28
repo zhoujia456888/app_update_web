@@ -4,13 +4,35 @@ import {user_api} from "~/api/user_api";
 import type {RefreshTokenReq, RefreshTokenResp} from "~/types/user";
 import type {BaseResp} from "~/types/base_response";
 
-const refreshApi = axios.create({
-    baseURL: '/api',
-    timeout: 10000
-})
+
+function removeTokenAndToLogin() {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    window.location.href = '/login'
+}
 
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig()
+
+    const refreshApi = axios.create({
+        baseURL: '/api',
+        timeout: 10000
+    })
+
+    refreshApi.interceptors.response.use(
+        (res) => res,
+        (err) => {
+            // 处理超时错误
+            if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+                toast.error('请求超时', '网络连接超时，请检查网络后重试')
+            }
+            // 常见：token 过期/无效
+            if (err?.response?.status === 401) {
+                removeTokenAndToLogin()
+            }
+            return Promise.reject(err)
+        }
+    )
 
     const api = axios.create({
         baseURL: '/api',
@@ -35,11 +57,7 @@ export default defineNuxtPlugin(() => {
             }
             // 常见：token 过期/无效
             if (err?.response?.status === 401) {
-                localStorage.removeItem('access_token')
-                localStorage.removeItem('refresh_token')
-                // 这里不要直接使用 navigateTo（插件里不一定有路由上下文）
-                // 可以使用 useRouter 来获取路由实例
-                window.location.href = '/login'
+                removeTokenAndToLogin()
             } else if (err?.response?.status === 403) {
                 //此处应该调用接口刷新Token
                 // 调用刷新token接口
@@ -60,9 +78,7 @@ export default defineNuxtPlugin(() => {
                         }
                     })
                 } else {
-                    localStorage.removeItem('access_token')
-                    localStorage.removeItem('refresh_token')
-                    window.location.href = '/login'
+                    removeTokenAndToLogin()
                 }
             }
             return Promise.reject(err)
@@ -75,3 +91,5 @@ export default defineNuxtPlugin(() => {
         }
     }
 })
+
+
