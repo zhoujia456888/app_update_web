@@ -9,11 +9,12 @@
 <script setup lang="ts">
 const toaster = {
   position: 'top-right' as const,
-  expand: false
+  expand: false,
+  progress: false,
+  duration: 3000
 }
 
 onMounted(() => {
   setToastApi(useToast())
 })
 </script>
-

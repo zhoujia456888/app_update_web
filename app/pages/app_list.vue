@@ -1,6 +1,8 @@
 <template>
-  <div class="flex justify-center items-center h-screen">
-    <div class="text-2xl font-bold">APP列表</div>
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+    <header class="py-3.5 px-4">
+      <div class="text-lg font-bold text-gray-900">App列表</div>
+    </header>
   </div>
 </template>
 

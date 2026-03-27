@@ -1,8 +1,8 @@
 // plugins/axios.ts
 import axios from 'axios'
-import {user_api} from "~/api/user_api";
-import type {RefreshTokenReq, RefreshTokenResp} from "~/types/user";
-import type {BaseResp} from "~/types/base_response";
+import type {InternalAxiosRequestConfig} from 'axios'
+import type {RefreshTokenResp} from '~/types/user'
+import type {BaseResp} from '~/types/base_response'
 
 
 function removeTokenAndToLogin() {
@@ -12,8 +12,6 @@ function removeTokenAndToLogin() {
 }
 
 export default defineNuxtPlugin(() => {
-    const config = useRuntimeConfig()
-
     const refreshApi = axios.create({
         baseURL: '/api',
         timeout: 10000
@@ -50,7 +48,7 @@ export default defineNuxtPlugin(() => {
 
     api.interceptors.response.use(
         (res) => res,
-        (err) => {
+        async (err) => {
             // 处理超时错误
             if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
                 toast.error('请求超时', '网络连接超时，请检查网络后重试')
@@ -59,24 +57,36 @@ export default defineNuxtPlugin(() => {
             if (err?.response?.status === 401) {
                 removeTokenAndToLogin()
             } else if (err?.response?.status === 403) {
-                //此处应该调用接口刷新Token
-                // 调用刷新token接口
+                const originalRequest = err.config as (InternalAxiosRequestConfig & {_retry?: boolean}) | undefined
+                if (!originalRequest || originalRequest._retry) {
+                    return Promise.reject(err)
+                }
+
                 const refresh_token = localStorage.getItem('refresh_token')
                 if (refresh_token) {
                     const user_id = JSON.parse(localStorage.getItem('user_info') || '{}')?.id
-                    refreshApi.post<BaseResp<RefreshTokenResp>>('/users/refresh_token', {
-                        user_id: user_id,
-                        refresh_token: refresh_token
-                    }).then((res) => {
-                        if (res.data.code == 200) {
-                            localStorage.setItem('access_token', res.data.data.access_token)
-                            localStorage.setItem('refresh_token', res.data.data.refresh_token)
-                            // 重新请求失败的接口
-                            // 重新设置请求头
-                            err.config.headers.Authorization = `Bearer ${res.data.data.access_token}`
-                            return api(err.config)
+                    originalRequest._retry = true
+
+                    try {
+                        const res = await refreshApi.post<BaseResp<RefreshTokenResp>>('/users/refresh_token', {
+                            user_id,
+                            refresh_token
+                        })
+
+                        if (res.data.code !== 200) {
+                            removeTokenAndToLogin()
+                            return Promise.reject(err)
                         }
-                    })
+
+                        localStorage.setItem('access_token', res.data.data.access_token)
+                        localStorage.setItem('refresh_token', res.data.data.refresh_token)
+                        originalRequest.headers = originalRequest.headers || {}
+                        originalRequest.headers.Authorization = `Bearer ${res.data.data.access_token}`
+                        return api(originalRequest)
+                    } catch (refreshErr) {
+                        removeTokenAndToLogin()
+                        return Promise.reject(refreshErr)
+                    }
                 } else {
                     removeTokenAndToLogin()
                 }

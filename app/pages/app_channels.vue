@@ -1,9 +1,8 @@
 <template>
-  <div class="flex flex-col py-3.5 ma h-full min-h-0">
-
-    <div class="flex items-center justify-between px-4">
-      <div class="font-semibold">App渠道管理</div>
-    </div>
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+    <header class="py-3.5 px-4">
+      <div class="text-lg font-bold text-gray-900">App渠道管理</div>
+    </header>
 
     <div v-if="appChannelList.length === 0" class="flex items-center justify-center py-20">
       <UEmpty
@@ -42,46 +41,46 @@
       </div>
       <div class="flex-1 flex flex-col min-h-0">
         <!-- UTable 部分 -->
-          <UTable sticky
-                  v-model:page-index="pageIndex"
-                  v-model:page-size="pageSize"
-                  v-model:global-filter="globalFilter"
-                  :data="appChannelList"
-                  :columns="columns"
-                  :pagination-options="{getPaginationRowModel: getPaginationRowModel()}"
-                  class="flex-1 overflow-auto">
-            <template #name-cell="{ row }">
-              <div>
-                <p class="w-1.5">
-                  {{ row.original.channel_id }}
-                </p>
-                <p>
-                  {{ row.original.channel_name }}
-                </p>
-                <p>
-                  {{ row.original.create_time }}
-                </p>
-              </div>
-            </template>
-            <template #action-cell="{ row }">
-              <div class="flex gap-2">
-                <UButton
-                    icon="i-lucide-edit"
-                    color="neutral"
-                    variant="ghost"
-                    aria-label="Actions"
-                    @click="showEditAppChannelModal(row.original)"
-                />
-                <UButton
-                    icon="i-lucide-trash"
-                    color="error"
-                    variant="ghost"
-                    aria-label="Actions"
-                    @click="showDeleteAppChannelModal(row.original)"
-                />
-              </div>
-            </template>
-          </UTable>
+        <UTable sticky
+                v-model:page-index="pageIndex"
+                v-model:page-size="pageSize"
+                v-model:global-filter="globalFilter"
+                :data="appChannelList"
+                :columns="columns"
+                :pagination-options="{getPaginationRowModel: getPaginationRowModel()}"
+                class="flex-1 overflow-auto">
+          <template #name-cell="{ row }">
+            <div>
+              <p class="w-1.5">
+                {{ row.original.channel_id }}
+              </p>
+              <p>
+                {{ row.original.channel_name }}
+              </p>
+              <p>
+                {{ row.original.create_time }}
+              </p>
+            </div>
+          </template>
+          <template #action-cell="{ row }">
+            <div class="flex gap-2">
+              <UButton
+                  icon="i-lucide-edit"
+                  color="neutral"
+                  variant="ghost"
+                  aria-label="Actions"
+                  @click="showEditAppChannelModal(row.original)"
+              />
+              <UButton
+                  icon="i-lucide-trash"
+                  color="error"
+                  variant="ghost"
+                  aria-label="Actions"
+                  @click="showDeleteAppChannelModal(row.original)"
+              />
+            </div>
+          </template>
+        </UTable>
 
         <div class="flex justify-end border-t border-default pt-4 px-4">
           <UPagination
@@ -204,10 +203,6 @@ async function getAppChannelList() {
   console.log(pageTotal)
   totalChannelCount.value = resp.total_channel_count || 0
   appChannelList.value = resp.channel_list || []
-  if (appChannelList.value.length === 0) {
-    toast.info('暂无渠道数据', '暂无渠道数据')
-  }
-
 }
 
 async function showAddAppChannelModal() {
