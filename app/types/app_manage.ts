@@ -4,8 +4,8 @@
 export type UploadAppFileResp = {
     ///文件路径
     file_path: string,
-    ///APK文件名称
-    apk_name: string,
+    ///文件名称
+    file_name: string,
     ///APP名称
     app_name: string,
     ///包名
@@ -24,15 +24,14 @@ export type UploadAppFileResp = {
 
 /** 完成应用上传请求参数 */
 export type UploadAppFileCompleteReq = {
-    file_path: string
-    apk_name: string
     app_name: string
+    file_path: string
+    file_name: string
     package_name: string
     app_icon_path: string
     version_name: string
     version_code: string
     file_size: number
-    upload_file_info: string
     channel_id: string
     channel_name: string
     update_log: string
