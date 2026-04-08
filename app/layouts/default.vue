@@ -27,7 +27,7 @@
             <div class="w-24">
               <UButton color="neutral" to="/profile" variant="ghost" block>个人中心</UButton>
               <UButton color="neutral" to="/settings" variant="ghost" block>设置</UButton>
-              <UButton color="error" @click="logout()" variant="ghost" block>退出登录</UButton>
+              <UButton color="error" @click="_logout()" variant="ghost" block>退出登录</UButton>
             </div>
           </template>
         </UPopover>
@@ -106,7 +106,7 @@ const menu: MenuItem[] = [
   }
 ]
 
-async function logout() {
+async function _logout() {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   localStorage.removeItem('user_info')
@@ -114,5 +114,6 @@ async function logout() {
 }
 
 </script>
+
 
 

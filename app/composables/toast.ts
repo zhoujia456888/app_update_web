@@ -1,13 +1,28 @@
 // toast.ts
+type ToastId = string | number
+
+type ToastOptions = {
+    title?: string
+    description?: string
+    color?: string
+    duration?: number
+    [key: string]: unknown
+}
+
+type ToastInstance = {
+    id: ToastId
+    [key: string]: unknown
+}
+
 type ToastApi = {
-    add: (options: any) => any
-    remove: (id: string | number) => void
+    add: (options: ToastOptions) => ToastInstance
+    remove: (id: ToastId) => void
     clear: () => void
 }
 
 let toastApi: ToastApi | null = null
 const DEFAULT_DURATION = 3000
-const toastTimers = new Map<string | number, ReturnType<typeof setTimeout>>()
+const toastTimers = new Map<ToastId, ReturnType<typeof setTimeout>>()
 
 export function setToastApi(api: ToastApi) {
     toastApi = api
@@ -21,7 +36,7 @@ function ensureToast() {
     return toastApi
 }
 
-function clearToastTimer(id: string | number) {
+function clearToastTimer(id: ToastId) {
     const timer = toastTimers.get(id)
     if (timer) {
         clearTimeout(timer)
@@ -29,7 +44,7 @@ function clearToastTimer(id: string | number) {
     }
 }
 
-function addToast(options: any) {
+function addToast(options: ToastOptions) {
     const api = ensureToast()
     const duration = DEFAULT_DURATION
     const toast = api.add({
@@ -60,10 +75,10 @@ const toast = {
     info(title: string = '提示',message: string) {
         return addToast({ title, description: message, color: 'info' })
     },
-    add(options: any) {
+    add(options: ToastOptions) {
         return addToast(options)
     },
-    remove(id: string | number) {
+    remove(id: ToastId) {
         clearToastTimer(id)
         return ensureToast().remove(id)
     },
