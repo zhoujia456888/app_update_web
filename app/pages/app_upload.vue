@@ -52,7 +52,13 @@
                 class="flex h-full `min-h-112 flex-col items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 px-8 py-10 text-center"
             >
                 <div class="text-sm font-medium tracking-[0.2em] text-gray-400">
-                    {{ isUploading ? "UPLOADING" : "COMPLETED" }}
+                    {{
+                        uploadStatus === "uploading"
+                            ? "UPLOADING"
+                            : uploadStatus === "success"
+                              ? "COMPLETED"
+                              : "FAILED"
+                    }}
                 </div>
                 <div class="mt-4 text-6xl font-bold text-gray-900">
                     {{ uploadProgress }}%
@@ -67,20 +73,22 @@
                 </div>
                 <div class="mt-6 text-sm text-gray-500">
                     {{
-                        isUploading
+                        uploadStatus === "uploading"
                             ? "安装包正在上传，请勿关闭页面。"
-                            : "安装包上传完成，可继续上传新的版本。"
+                            : uploadStatus === "success"
+                              ? "安装包上传完成，可继续上传新的版本。"
+                              : "安装包上传失败，请检查网络或重新登录后再试。"
                     }}
                 </div>
                 <UButton
-                    v-if="!isUploading"
+                    v-if="uploadStatus !== 'uploading'"
                     class="mt-8"
-                    color="primary"
+                    :color="uploadStatus === 'error' ? 'error' : 'primary'"
                     variant="solid"
-                    icon="i-lucide-refresh-cw"
+                    :icon="uploadStatus === 'error' ? 'i-lucide-rotate-cw' : 'i-lucide-refresh-cw'"
                     @click="_resetUpload"
                 >
-                    继续上传
+                    {{ uploadStatus === "error" ? "重新上传" : "继续上传" }}
                 </UButton>
             </div>
         </div>
@@ -97,105 +105,113 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const uploadProgress = ref(0);
 const isUploading = ref(false);
 const hasShownProgress = ref(false);
+const uploadStatus = ref<"uploading" | "success" | "error">("success");
 const isDragging = ref(false);
 const api = app_manage_api();
 
 function _openFilePicker() {
-    if (isUploading.value) return;
-    fileInputRef.value?.click();
+	if (isUploading.value) return;
+	fileInputRef.value?.click();
 }
 
 function isApkFile(file: File) {
-    return (
-        file.name.toLowerCase().endsWith(".apk") ||
-        file.type === "application/vnd.android.package-archive"
-    );
+	return (
+		file.name.toLowerCase().endsWith(".apk") ||
+		file.type === "application/vnd.android.package-archive"
+	);
 }
 
 async function uploadFile(file: File) {
-    if (!isApkFile(file)) {
-        toast.error("文件格式错误", "请上传 apk 文件");
-        return;
-    }
+	if (!isApkFile(file)) {
+		toast.error("文件格式错误", "请上传 apk 文件");
+		return;
+	}
 
-    const formData = new FormData();
-    formData.append("file", file);
+	const formData = new FormData();
+	formData.append("file", file);
 
-    try {
-        isUploading.value = true;
-        uploadProgress.value = 0;
-        hasShownProgress.value = true;
+	try {
+		isUploading.value = true;
+		uploadProgress.value = 0;
+		hasShownProgress.value = true;
+		uploadStatus.value = "uploading";
 
-        const response = await api.upload_app_file(formData, {
-            onUploadProgress: (event: AxiosProgressEvent) => {
-                if (!event.total) return;
-                uploadProgress.value = Math.min(
-                    100,
-                    Math.round((event.loaded * 100) / event.total),
-                );
-            },
-        });
+		const response = await api.upload_app_file(formData, {
+			onUploadProgress: (event: AxiosProgressEvent) => {
+				if (!event.total) return;
+				uploadProgress.value = Math.min(
+					100,
+					Math.round((event.loaded * 100) / event.total),
+				);
+			},
+		});
 
-        if (response.data.code === 200) {
-            uploadProgress.value = 100;
-            toast.success("文件上传成功", response.data.msg || "文件上传成功");
-            await navigateTo({
-                path: "/app_update_complete",
-                query: {
-                    info: JSON.stringify(response.data.data),
-                },
-            });
-        } else {
-            toast.error("文件上传失败", response.data.msg || "文件上传失败");
-        }
-    } catch (error) {
-        const errorMessage =
-            error instanceof Error ? error.message : "未知错误";
-        console.error("文件上传失败:", error);
-        toast.error("文件上传失败", errorMessage);
-    } finally {
-        isUploading.value = false;
-        if (fileInputRef.value) {
-            fileInputRef.value.value = "";
-        }
-    }
+		if (response.data.code === 200) {
+			uploadProgress.value = 100;
+			uploadStatus.value = "success";
+			toast.success(
+				"文件上传成功",
+				response.data.data.upload_file_info || "文件上传成功",
+			);
+			await navigateTo({
+				path: "/app_update_complete",
+				query: {
+					info: JSON.stringify(response.data.data),
+				},
+			});
+		} else {
+			uploadStatus.value = "error";
+			toast.error("文件上传失败", response.data.msg || "文件上传失败");
+		}
+	} catch (error) {
+		uploadStatus.value = "error";
+		const errorMessage = error instanceof Error ? error.message : "未知错误";
+		console.error("文件上传失败:", error);
+		toast.error("文件上传失败", errorMessage);
+	} finally {
+		isUploading.value = false;
+		if (fileInputRef.value) {
+			fileInputRef.value.value = "";
+		}
+	}
 }
 
 function _handleFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+	const input = event.target as HTMLInputElement;
+	const file = input.files?.[0];
 
-    if (!file) return;
+	if (!file) return;
 
-    void uploadFile(file);
+	void uploadFile(file);
 }
 
 function _handleDragOver() {
-    if (isUploading.value) return;
-    isDragging.value = true;
+	if (isUploading.value) return;
+	isDragging.value = true;
 }
 
 function _handleDragLeave() {
-    isDragging.value = false;
+	isDragging.value = false;
 }
 
 function _handleDrop(event: DragEvent) {
-    isDragging.value = false;
+	isDragging.value = false;
 
-    if (isUploading.value) return;
+	if (isUploading.value) return;
 
-    const file = event.dataTransfer?.files?.[0];
-    if (!file) return;
+	const file = event.dataTransfer?.files?.[0];
+	if (!file) return;
 
-    void uploadFile(file);
+	void uploadFile(file);
 }
 
 function _resetUpload() {
-    uploadProgress.value = 0;
-    hasShownProgress.value = false;
-    isDragging.value = false;
-    if (fileInputRef.value) {
-        fileInputRef.value.value = "";
-    }
+	uploadProgress.value = 0;
+	hasShownProgress.value = false;
+	uploadStatus.value = "success";
+	isDragging.value = false;
+	if (fileInputRef.value) {
+		fileInputRef.value.value = "";
+	}
 }
 </script>
