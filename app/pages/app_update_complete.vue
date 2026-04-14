@@ -32,8 +32,8 @@
                 class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50"
             >
               <img
-                  v-if="_appIconUrl"
-                  :src="_appIconUrl"
+                  v-if="formattedAppIconUrl(uploadAppInfo.app_icon_path?.trim() || '')"
+                  :src="formattedAppIconUrl(uploadAppInfo.app_icon_path?.trim() || '')"
                   :alt="uploadAppInfo.app_name || 'APP图标'"
                   class="h-full w-full object-cover"
               />
@@ -77,7 +77,7 @@
             <div class="rounded-xl bg-gray-50 p-4">
               <div class="text-sm text-gray-500">文件大小</div>
               <div class="mt-2 font-medium text-gray-900">
-                {{ _formattedFileSize }}
+                {{ formattedFileSize(uploadAppInfo.file_size || 0) }}
               </div>
             </div>
           </div>
@@ -146,6 +146,7 @@
 import {navigateTo} from "#imports";
 import {app_channel_api} from "~/api/app_channel_api";
 import {app_manage_api} from "~/api/app_manage_api";
+import {useAppUploadState} from "~/composables/app_shared_state";
 import toast from "~/composables/toast";
 import type {
   GetAppChannelListResp,
@@ -153,55 +154,19 @@ import type {
 } from "~/types/app_channel";
 import type {
   UploadAppFileCompleteReq,
-  UploadAppFileResp,
 } from "~/types/app_manage";
 import {getHttpErrorMessage} from "~/utils/http_error";
+import {formattedAppIconUrl, formattedFileSize} from "~/utils/app_file_info_utils";
 
-const route = useRoute();
 const api = app_manage_api();
 const channelApi = app_channel_api();
-const config = useRuntimeConfig();
 const isSubmitting = ref(false);
 const selectedChannelId = ref<string>();
 const channelOptions = ref<GetAppChannelListRespItem[]>([]);
 const updateLog = ref("");
-const iconServerUrl = config.public.apiBase;
 
-const rawInfo = route.query.info;
-const uploadAppInfo = computed<UploadAppFileResp | null>(() => {
-  if (typeof rawInfo !== "string") {
-    return null;
-  }
+const uploadAppInfo = useAppUploadState();
 
-  try {
-    return JSON.parse(rawInfo) as UploadAppFileResp;
-  } catch {
-    return null;
-  }
-});
-
-const _formattedFileSize = computed(() => {
-  const bytes = uploadAppInfo.value?.file_size ?? 0;
-  if (!bytes) return "0 B";
-
-  const units = ["B", "KB", "MB", "GB"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex += 1;
-  }
-
-  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
-});
-
-const _appIconUrl = computed(() => {
-  const iconPath = uploadAppInfo.value?.app_icon_path?.trim();
-  if (!iconPath) return "";
-  if (/^https?:\/\//i.test(iconPath)) return iconPath;
-  return `${iconServerUrl}${iconPath.startsWith("/") ? iconPath : `/${iconPath}`}`;
-});
 
 const selectedChannel = computed(() => {
   return channelOptions.value.find(
@@ -280,6 +245,7 @@ async function _submitAppInfo() {
         "提交成功",
         res.data.data.upload_app_complete_info || "APP 信息已提交",
     );
+    uploadAppInfo.value = null;
     await navigateTo("/app_list");
   } catch (error: unknown) {
     const errorMessage = getHttpErrorMessage(error, "提交失败，请稍后重试");

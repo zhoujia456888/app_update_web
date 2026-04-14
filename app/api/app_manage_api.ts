@@ -1,5 +1,7 @@
 import type { AxiosRequestConfig } from "axios";
 import type {
+	GetAppInfoReq,
+	GetAppInfoResp,
 	GetAppListReq,
 	GetAppListResp,
 	UploadAppFileCompleteReq,
@@ -34,6 +36,13 @@ export function app_manage_api() {
 		get_app_list_by_page(data: GetAppListReq) {
 			return $api.post<BaseResp<GetAppListResp>>(
 				"/app_manage/get_app_list_by_page",
+				data,
+			);
+		},
+		/** 获取 APP 详情接口 */
+		get_app_info(data: GetAppInfoReq) {
+			return $api.post<BaseResp<GetAppInfoResp>>(
+				"/app_manage/get_app_info",
 				data,
 			);
 		},

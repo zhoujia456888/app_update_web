@@ -1,3 +1,5 @@
+import { useToast } from "#imports";
+
 // toast.ts
 type ToastId = string | number;
 
@@ -14,11 +16,7 @@ type ToastInstance = {
   [key: string]: unknown;
 };
 
-type ToastApi = {
-  add: (options: ToastOptions) => ToastInstance;
-  remove: (id: ToastId) => void;
-  clear: () => void;
-};
+type ToastApi = ReturnType<typeof useToast>;
 
 let toastApi: ToastApi | null = null;
 const DEFAULT_DURATION = 3000;

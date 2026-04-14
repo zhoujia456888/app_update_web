@@ -49,6 +49,11 @@ export type GetAppListReq = {
 	page_size: number;
 };
 
+/** 获取 APP 详情请求参数 */
+export type GetAppInfoReq = {
+	app_id: string;
+};
+
 /** 获取 APP 列表返回参数 */
 export type GetAppListResp = {
 	app_list: GetAppListRespItem[];
@@ -73,3 +78,6 @@ export type GetAppListRespItem = {
 	create_time: string;
 	update_time: string;
 };
+
+/** 获取 APP 详情返回参数 */
+export type GetAppInfoResp = GetAppListRespItem;

@@ -99,7 +99,9 @@
 import type { AxiosProgressEvent } from "axios";
 import { ref } from "vue";
 import { app_manage_api } from "~/api/app_manage_api";
+import { useAppUploadState } from "~/composables/app_shared_state";
 import toast from "~/composables/toast";
+import {isApkFile} from "~/utils/app_file_info_utils";
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const uploadProgress = ref(0);
@@ -112,13 +114,6 @@ const api = app_manage_api();
 function _openFilePicker() {
 	if (isUploading.value) return;
 	fileInputRef.value?.click();
-}
-
-function isApkFile(file: File) {
-	return (
-		file.name.toLowerCase().endsWith(".apk") ||
-		file.type === "application/vnd.android.package-archive"
-	);
 }
 
 async function uploadFile(file: File) {
@@ -153,12 +148,9 @@ async function uploadFile(file: File) {
 				"文件上传成功",
 				response.data.data.upload_file_info || "文件上传成功",
 			);
-			await navigateTo({
-				path: "/app_update_complete",
-				query: {
-					info: JSON.stringify(response.data.data),
-				},
-			});
+      const appUploadState = useAppUploadState();
+      appUploadState.value = response.data.data;
+      await navigateTo("/app_update_complete");
 		} else {
 			uploadStatus.value = "error";
 			toast.error("文件上传失败", response.data.msg || "文件上传失败");
