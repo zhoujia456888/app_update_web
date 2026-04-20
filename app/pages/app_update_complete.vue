@@ -1,7 +1,7 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-default text-default">
     <header class="py-3.5 px-4">
-      <div class="text-lg font-bold text-gray-900">应用发布完成</div>
+      <div class="text-lg font-bold text-highlighted">应用发布完成</div>
     </header>
 
     <div class="flex-1 overflow-y-auto px-4 pb-6">
@@ -25,11 +25,11 @@
 
       <div v-else class="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <section
-            class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+            class="rounded-2xl border border-default bg-default p-6 shadow-sm"
         >
           <div class="mb-6 flex items-start gap-4">
             <div
-                class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50"
+                class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-default bg-elevated"
             >
               <img
                   v-if="formattedAppIconUrl(uploadAppInfo.app_icon_path?.trim() || '')"
@@ -40,55 +40,55 @@
               <UIcon
                   v-else
                   name="i-lucide-smartphone"
-                  class="h-10 w-10 text-gray-400"
+                  class="h-10 w-10 text-muted"
               />
             </div>
             <div class="min-w-0 flex-1">
-              <div class="text-2xl font-semibold text-gray-900">
+              <div class="text-2xl font-semibold text-highlighted">
                 {{ uploadAppInfo.app_name || "未识别应用名称" }}
               </div>
-              <div class="mt-2 text-sm text-gray-500">
+              <div class="mt-2 text-sm text-toned">
                 {{ uploadAppInfo.file_name || "-" }}
               </div>
             </div>
           </div>
 
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-xl bg-gray-50 p-4">
-              <div class="text-sm text-gray-500">包名</div>
+            <div class="rounded-xl bg-elevated p-4">
+              <div class="text-sm text-toned">包名</div>
               <div
-                  class="mt-2 break-all font-medium text-gray-900"
+                  class="mt-2 break-all font-medium text-highlighted"
               >
                 {{ uploadAppInfo.package_name || "-" }}
               </div>
             </div>
-            <div class="rounded-xl bg-gray-50 p-4">
-              <div class="text-sm text-gray-500">版本号</div>
-              <div class="mt-2 font-medium text-gray-900">
+            <div class="rounded-xl bg-elevated p-4">
+              <div class="text-sm text-toned">版本号</div>
+              <div class="mt-2 font-medium text-highlighted">
                 {{ uploadAppInfo.version_name || "-" }}
               </div>
             </div>
-            <div class="rounded-xl bg-gray-50 p-4">
-              <div class="text-sm text-gray-500">内部版本</div>
-              <div class="mt-2 font-medium text-gray-900">
+            <div class="rounded-xl bg-elevated p-4">
+              <div class="text-sm text-toned">内部版本</div>
+              <div class="mt-2 font-medium text-highlighted">
                 {{ uploadAppInfo.version_code || "-" }}
               </div>
             </div>
-            <div class="rounded-xl bg-gray-50 p-4">
-              <div class="text-sm text-gray-500">文件大小</div>
-              <div class="mt-2 font-medium text-gray-900">
+            <div class="rounded-xl bg-elevated p-4">
+              <div class="text-sm text-toned">文件大小</div>
+              <div class="mt-2 font-medium text-highlighted">
                 {{ formattedFileSize(uploadAppInfo.file_size || 0) }}
               </div>
             </div>
           </div>
-          <div class="my-5 h-px w-full bg-gray-200"/>
-          <div class="mb-4 text-base font-semibold text-gray-900">
+          <div class="my-5 h-px w-full bg-default"/>
+          <div class="mb-4 text-base font-semibold text-highlighted">
             发布信息
           </div>
           <div class="grid gap-6">
             <div>
               <label
-                  class="mb-2 block text-sm font-medium text-gray-700"
+                  class="mb-2 block text-sm font-medium text-default"
               >选择渠道</label
               >
               <USelectMenu
@@ -104,7 +104,7 @@
 
             <div>
               <label
-                  class="mb-2 block text-sm font-medium text-gray-700"
+                  class="mb-2 block text-sm font-medium text-default"
               >APP 更新日志</label
               >
               <UTextarea
@@ -183,6 +183,7 @@ async function getChannelList() {
     const res = await channelApi.get_app_channel_list_by_page({
       page_index: 0,
       page_size: 999,
+      channel_name: "",
     });
 
     if (res.data.code !== 200) {

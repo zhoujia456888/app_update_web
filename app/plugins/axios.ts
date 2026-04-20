@@ -73,7 +73,7 @@ export default defineNuxtPlugin(() => {
 
 					try {
 						const res = await refreshApi.post<BaseResp<RefreshTokenResp>>(
-							"/users/refresh_token",
+							"/public/users/refresh_token",
 							{
 								user_id,
 								refresh_token,

@@ -32,6 +32,21 @@ export type RefreshTokenResp = {
     refresh_token: string
 }
 
+/** 最近操作日志项 */
+export type OperationLogItem = {
+    id: string
+    username: string
+    operation_type: string
+    operation_detail: string
+    create_time: string
+}
+
+/** 获取最近操作日志返回参数 */
+export type GetRecentOperationLogsResp = {
+    operation_logs: OperationLogItem[]
+    total_count: number
+}
+
 
 /*** 注册请求参数 */
 export type RegisterReq = {

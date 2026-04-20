@@ -43,7 +43,7 @@
 
     <!-- Footer -->
     <UFooter class="w-full">
-      <div class="mx-auto flex items-center justify-between px-4 py-3 text-xs text-gray-500">
+      <div class="mx-auto flex items-center justify-between px-4 py-3 text-xs text-toned">
         <span>© {{ new Date().getFullYear() }} App Update Powered by Nuxt 4 + Nuxt UI</span>
       </div>
     </UFooter>

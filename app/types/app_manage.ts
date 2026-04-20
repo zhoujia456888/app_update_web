@@ -47,11 +47,18 @@ export type UploadAppFileCompleteResp = {
 export type GetAppListReq = {
 	page_index: number;
 	page_size: number;
+	search_key: string;
 };
 
 /** 获取 APP 详情请求参数 */
 export type GetAppInfoReq = {
 	app_id: string;
+};
+
+/** 删除 APP 请求参数 */
+export type DeleteAppReq = {
+	app_id: string;
+	app_name: string;
 };
 
 /** 获取 APP 列表返回参数 */
@@ -81,3 +88,10 @@ export type GetAppListRespItem = {
 
 /** 获取 APP 详情返回参数 */
 export type GetAppInfoResp = GetAppListRespItem;
+
+/** 删除 APP 返回参数 */
+export type DeleteAppResp = {
+	app_id: string;
+	app_name: string;
+	delete_info: string;
+};

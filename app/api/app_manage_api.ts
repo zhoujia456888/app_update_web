@@ -1,5 +1,7 @@
 import type { AxiosRequestConfig } from "axios";
 import type {
+	DeleteAppReq,
+	DeleteAppResp,
 	GetAppInfoReq,
 	GetAppInfoResp,
 	GetAppListReq,
@@ -42,7 +44,15 @@ export function app_manage_api() {
 		/** 获取 APP 详情接口 */
 		get_app_info(data: GetAppInfoReq) {
 			return $api.post<BaseResp<GetAppInfoResp>>(
-				"/app_manage/get_app_info",
+				"/public/app_manage/get_app_info",
+				data,
+			);
+		},
+
+		/** 删除 APP 接口 */
+		delete_app(data: DeleteAppReq) {
+			return $api.post<BaseResp<DeleteAppResp>>(
+				"/app_manage/delete_app",
 				data,
 			);
 		},

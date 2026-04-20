@@ -15,17 +15,17 @@ export function user_api() {
 	return {
 		/** 注册接口 */
 		register(data: RegisterReq) {
-			return $api.post<BaseResp<RegisterResp>>("/users/register", data);
+			return $api.post<BaseResp<RegisterResp>>("/public/users/register", data);
 		},
 
 		/** 登录接口 */
 		login(data: LoginReq) {
-			return $api.post<BaseResp<LoginResponse>>("/users/login", data);
+			return $api.post<BaseResp<LoginResponse>>("/public/users/login", data);
 		},
 
 		/** 获取验证码接口 */
 		getCaptcha() {
-			return $api.post<BaseResp<CaptchaData>>("/users/get_auth_captcha");
+			return $api.post<BaseResp<CaptchaData>>("/public/users/get_auth_captcha");
 		},
 
 		/** 获取用户信息接口 */

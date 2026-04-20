@@ -16,6 +16,7 @@ export type CreateAppChannelResp = {
 export type GetAppChannelListReq = {
     page_index: number
     page_size: number
+    channel_name: string
 }
 
 

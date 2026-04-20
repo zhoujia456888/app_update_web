@@ -1,7 +1,7 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-default text-default">
     <header class="py-3.5 px-4">
-      <div class="text-lg font-bold text-gray-900">App渠道管理</div>
+      <div class="text-lg font-bold text-highlighted">App渠道管理</div>
     </header>
 
     <div v-if="_isInitialLoading" class="flex flex-1 flex-col px-4 pb-4">
@@ -24,7 +24,7 @@
         <div
             v-for="row in 5"
             :key="`channel-row-${row}`"
-            class="grid grid-cols-[1.2fr_1.4fr_1.4fr_1.4fr_160px] items-center gap-4 rounded-lg border border-gray-100 px-4 py-5"
+            class="grid grid-cols-[1.2fr_1.4fr_1.4fr_1.4fr_160px] items-center gap-4 rounded-lg border border-default px-4 py-5"
         >
           <USkeleton class="h-5 w-3/4"/>
           <USkeleton class="h-5 w-4/5"/>
@@ -37,37 +37,34 @@
         </div>
       </div>
     </div>
-    <div
-        v-if="appChannelList.length === 0"
-        class="flex items-center justify-center py-20"
-    >
-      <UEmpty
-          class="flex items-center justify-between"
-          icon="i-lucide-file"
-          title="暂无App渠道数据"
-          description="暂无App渠道数据。点击按钮创建一个新渠道吧！"
-          :actions="[
-                    {
-                        icon: 'i-lucide-plus',
-                        label: '创建渠道',
-                        onClick: () => _showAddAppChannelModal(),
-                    },
-                    {
-                        icon: 'i-lucide-refresh-cw',
-                        label: '刷新看看',
-                        color: 'neutral',
-                        variant: 'subtle',
-                        onClick: () => getAppChannelList(),
-                    },
-                ]"
-      />
-    </div>
     <div v-else class="flex flex-col flex-1 px-4 min-h-0">
       <div class="py-3.5 border-b border-accented">
         <div class="flex items-center justify-end gap-4">
           <UInput
-              v-model="_globalFilter"
+              v-model="searchKeyword"
+              class="w-40 min-w-40"
               placeholder="搜索渠道名称..."
+              @compositionstart="isComposing = true"
+              @compositionend="_handleCompositionEnd"
+          >
+            <template #trailing>
+              <UButton
+                  v-if="searchKeyword"
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  aria-label="清空搜索"
+                  @click="searchKeyword = ''"
+              />
+            </template>
+          </UInput>
+          <UButton
+              icon="i-lucide-refresh-cw"
+              color="neutral"
+              variant="outline"
+              label="刷新"
+              @click="_searchAppChannelList()"
           />
           <UButton
               icon="i-lucide-plus"
@@ -79,62 +76,101 @@
         </div>
       </div>
       <div class="flex-1 flex flex-col min-h-0">
-        <!-- UTable 部分 -->
-        <UTable
-            sticky
-            v-model:page-index="pageIndex"
-            v-model:page-size="pageSize"
-            v-model:global-filter="_globalFilter"
-            :data="appChannelList"
-            :columns="_columns"
-            :pagination-options="{
-                        getPaginationRowModel: getPaginationRowModel(),
-                    }"
-            class="flex-1 overflow-auto"
-        >
-          <template #name-cell="{ row }">
-            <div>
-              <p class="w-1.5">
-                {{ row.original.channel_id }}
-              </p>
-              <p>
-                {{ row.original.channel_name }}
-              </p>
-              <p>
-                {{ row.original.create_time }}
-              </p>
-            </div>
-          </template>
-          <template #action-cell="{ row }">
-            <div class="flex gap-2">
-              <UButton
-                  icon="i-lucide-edit"
-                  color="neutral"
-                  variant="ghost"
-                  aria-label="Actions"
-                  @click="_showEditAppChannelModal(row.original)"
-                  label="编辑"
-              />
-              <UButton
-                  icon="i-lucide-trash"
-                  color="error"
-                  variant="ghost"
-                  aria-label="Actions"
-                  @click="_showDeleteAppChannelModal(row.original)"
-                  label="删除"
-              />
-            </div>
-          </template>
-        </UTable>
-
-        <div class="flex justify-end border-t border-default pt-4 px-4">
-          <UPagination
-              :page="pageIndex + 1"
-              :items-per-page="pageSize"
-              :total="totalChannelCount"
-              @update:page="(p) => {pageIndex = p - 1;getAppChannelList();}"
+        <div v-if="appChannelList.length === 0" class="flex flex-1 items-center justify-center py-20">
+          <UEmpty
+              class="flex items-center justify-between"
+              icon="i-lucide-file"
+              :title="searchKeyword.trim() ? '未找到匹配的渠道' : '暂无App渠道数据'"
+              :description="searchKeyword.trim() ? '换个关键词再试一次。' : '暂无App渠道数据。点击按钮创建一个新渠道吧！'"
+              :actions="searchKeyword.trim()
+                ? [
+                    {
+                      icon: 'i-lucide-eraser',
+                      label: '清空搜索',
+                      onClick: () => {
+                        searchKeyword = '';
+                      },
+                    },
+                    {
+                      icon: 'i-lucide-refresh-cw',
+                      label: '重新加载',
+                      color: 'neutral',
+                      variant: 'subtle',
+                      onClick: () => getAppChannelList(),
+                    },
+                  ]
+                : [
+                    {
+                      icon: 'i-lucide-plus',
+                      label: '创建渠道',
+                      onClick: () => _showAddAppChannelModal(),
+                    },
+                    {
+                      icon: 'i-lucide-refresh-cw',
+                      label: '刷新看看',
+                      color: 'neutral',
+                      variant: 'subtle',
+                      onClick: () => getAppChannelList(),
+                    },
+                  ]"
           />
         </div>
+        <template v-else>
+          <UTable
+              sticky
+              v-model:page-index="pageIndex"
+              v-model:page-size="pageSize"
+              :data="appChannelList"
+              :columns="_columns"
+              :pagination-options="{
+                          getPaginationRowModel: getPaginationRowModel(),
+                      }"
+              class="flex-1 overflow-auto"
+          >
+            <template #name-cell="{ row }">
+              <div>
+                <p class="w-1.5">
+                  {{ row.original.channel_id }}
+                </p>
+                <p>
+                  {{ row.original.channel_name }}
+                </p>
+                <p>
+                  {{ row.original.create_time }}
+                </p>
+              </div>
+            </template>
+            <template #action-cell="{ row }">
+              <div class="flex gap-2">
+                <UButton
+                    icon="i-lucide-edit"
+                    color="neutral"
+                    variant="ghost"
+                    aria-label="Actions"
+                    @click="_showEditAppChannelModal(row.original)"
+                    label="编辑"
+                />
+                <UButton
+                    icon="i-lucide-trash"
+                    color="error"
+                    variant="ghost"
+                    aria-label="Actions"
+                    @click="_showDeleteAppChannelModal(row.original)"
+                    label="删除"
+                />
+              </div>
+            </template>
+          </UTable>
+
+          <div class="flex justify-end border-t border-default pt-4 px-4">
+            <UPagination
+                :page="pageIndex + 1"
+                :items-per-page="pageSize"
+                :total="totalChannelCount"
+                @update:page="(p) => {pageIndex = p - 1;getAppChannelList();}"
+            />
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -219,7 +255,9 @@ const channelName = ref("");
 const api = app_channel_api();
 const appChannelList = ref<GetAppChannelListRespItem[]>([]);
 const _isInitialLoading = ref(true);
-const _globalFilter = ref("");
+const searchKeyword = ref("");
+const isComposing = ref(false);
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
 const isShowDeleteAppChannelModal = ref(false);
 const deleteAppChannelObj = ref<GetAppChannelListRespItem>();
@@ -229,6 +267,12 @@ const pageTotal = ref(0);
 const pageIndex = ref(0);
 const pageSize = ref(5);
 onMounted(getAppChannelList);
+
+onBeforeUnmount(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+});
 
 const _paginationOptions = {
   getPaginationRowModel: getPaginationRowModel(),
@@ -277,10 +321,13 @@ const _columns: TableColumn<GetAppChannelListRespItem>[] = [
 
 /** 获取当前账户下的所有渠道 */
 async function getAppChannelList() {
+  const keyword = searchKeyword.value.trim();
+
   try {
     const res = await api.get_app_channel_list_by_page({
       page_index: pageIndex.value,
       page_size: pageSize.value,
+      channel_name: keyword,
     });
     if (res.data.code !== 200) {
       toast.error("获取渠道列表失败", res.data.msg || "获取渠道列表失败");
@@ -308,6 +355,30 @@ async function _showAddAppChannelModal() {
   showInputAppChannelNameModal.value = true;
   isAddChannelModal.value = true;
 }
+
+function _searchAppChannelList() {
+  pageIndex.value = 0;
+  void getAppChannelList();
+}
+
+function _handleCompositionEnd() {
+  isComposing.value = false;
+  _searchAppChannelList();
+}
+
+watch(searchKeyword, () => {
+  if (isComposing.value) {
+    return;
+  }
+
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+
+  searchTimer = setTimeout(() => {
+    _searchAppChannelList();
+  }, 300);
+});
 
 async function _createAppChannel() {
   if (!channelName.value.trim()) {

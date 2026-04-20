@@ -149,8 +149,8 @@ import { getHttpErrorMessage } from "~/utils/http_error";
 definePageMeta({ layout: false });
 const api = user_api();
 
-const showPwd = ref(false);
-const showConfirmPwd = ref(false);
+const _showPwd = ref(false);
+const _showConfirmPwd = ref(false);
 const loading = ref(false);
 const captchaLoading = ref(false);
 const captchaImg = ref("");
