@@ -134,8 +134,8 @@
                     class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-default bg-elevated"
                 >
                   <img
-                      v-if="formattedAppIconUrl(row.original.app_icon_path?.trim() || '')"
-                      :src="formattedAppIconUrl(row.original.app_icon_path?.trim() || '')"
+                      v-if="formattedAppIconUrl(row.original.app_icon_path?.trim() || '', config.public.apiBase)"
+                      :src="formattedAppIconUrl(row.original.app_icon_path?.trim() || '', config.public.apiBase)"
                       :alt="row.original.app_icon_path || 'APP图标'"
                       class="h-full w-full object-cover"
                   />
@@ -209,7 +209,30 @@
             class="h-16 w-full rounded-xl"
         />
       </div>
-      <div v-else-if="appInfoObj" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div v-else-if="appInfoObj" class="space-y-4">
+        <div class="flex items-center gap-4 rounded-xl border border-default bg-elevated px-4 py-4">
+          <div
+              class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-default bg-default"
+          >
+            <img
+                v-if="formattedAppIconUrl(appInfoObj.app_icon_path || '', config.public.apiBase)"
+                :src="formattedAppIconUrl(appInfoObj.app_icon_path || '', config.public.apiBase)"
+                :alt="appInfoObj.app_name || 'APP图标'"
+                class="h-full w-full object-cover"
+            />
+            <UIcon
+                v-else
+                name="i-lucide-smartphone"
+                class="h-8 w-8 text-muted"
+            />
+          </div>
+          <div class="min-w-0">
+            <div class="mt-1 truncate text-sm font-medium text-highlighted">
+              {{ appInfoObj.app_name || "未命名应用" }}
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div
             v-for="item in appInfoItems"
             :key="item.label"
@@ -220,6 +243,7 @@
             {{ item.value || "-" }}
           </div>
         </div>
+      </div>
       </div>
       <div
           v-else
@@ -282,10 +306,8 @@ import {formattedAppIconUrl, formattedFileSize, formatDateTime} from "~/utils/ap
 
 const api = app_manage_api();
 const config = useRuntimeConfig();
-const iconServerUrl = config.public.apiBase;
 const appList = ref<GetAppListRespItem[]>([]);
 const totalAppCount = ref(0);
-const totalPageCount = ref(0);
 const pageIndex = ref(0);
 const pageSize = ref(5);
 const searchKeyword = ref("");
@@ -328,8 +350,6 @@ const appInfoItems = computed(() => {
     {label: "上传时间", value: formatDateTime(appInfoObj.value.create_time)},
     {label: "更新时间", value: formatDateTime(appInfoObj.value.update_time)},
     {label: "更新日志", value: appInfoObj.value.update_log},
-    {label: "文件路径", value: appInfoObj.value.file_path},
-    {label: "图标路径", value: appInfoObj.value.app_icon_path},
   ];
 });
 
@@ -392,7 +412,6 @@ async function getAppList() {
     }
 
     const resp = res.data.data as GetAppListResp;
-    totalPageCount.value = resp.total_page_count || 0;
     totalAppCount.value = resp.total_app_count || 0;
     appList.value = resp.app_list || [];
   } catch (error: unknown) {

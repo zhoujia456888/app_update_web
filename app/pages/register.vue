@@ -1,4 +1,4 @@
-<template xmlns="http://www.w3.org/1999/html">
+<template>
     <div
         class="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-950"
     >
@@ -226,13 +226,13 @@ async function _onRegister() {
 
 		if (res.data.code !== 200) {
 			toast.error("注册失败", res.data.msg || "注册失败");
+			await refreshCaptcha();
 			return;
 		}
 		toast.success("注册成功,请登录！", "注册成功,请登录！");
 
 		await navigateTo("/login", { replace: true });
 	} catch (error: unknown) {
-		console.log(error);
 		const errorMessage = getHttpErrorMessage(error, "注册失败");
 		toast.error("注册失败", errorMessage);
 		await refreshCaptcha();

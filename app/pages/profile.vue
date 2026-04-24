@@ -151,23 +151,7 @@
 
 <script setup lang="ts">
 import toast from "~/composables/toast";
-
-type UserInfo = {
-  id?: string;
-  username?: string;
-  name?: string;
-  nickname?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
-  create_time?: string;
-  update_time?: string;
-  [key: string]: unknown;
-};
-
-const userInfo = ref<UserInfo | null>(null);
-const accessToken = ref("");
-const refreshToken = ref("");
+const { accessToken, clearSession, refreshToken, syncFromStorage, userInfo } = useUserSession();
 
 const displayName = computed(() => {
   return userInfo.value?.nickname
@@ -202,26 +186,11 @@ const profileItems = computed(() => {
 });
 
 onMounted(() => {
-  _loadSession();
+  syncFromStorage();
 });
 
-function _loadSession() {
-  if (!import.meta.client) {
-    return;
-  }
-
-  accessToken.value = localStorage.getItem("access_token") || "";
-  refreshToken.value = localStorage.getItem("refresh_token") || "";
-
-  try {
-    userInfo.value = JSON.parse(localStorage.getItem("user_info") || "null");
-  } catch {
-    userInfo.value = null;
-  }
-}
-
 function _reloadUserInfo() {
-  _loadSession();
+  syncFromStorage();
   toast.success("刷新成功", "已重新读取本地用户信息");
 }
 
@@ -241,9 +210,7 @@ async function _copyUserInfo() {
 }
 
 async function _logout() {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  localStorage.removeItem("user_info");
+  clearSession();
   toast.success("已退出登录", "正在返回登录页");
   await navigateTo("/login", { replace: true });
 }

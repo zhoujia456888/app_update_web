@@ -1,7 +1,3 @@
-const config = useRuntimeConfig();
-const iconServerUrl = config.public.apiBase;
-
-
 export function isApkFile(file: File) {
     return (
         file.name.toLowerCase().endsWith(".apk") ||
@@ -32,9 +28,9 @@ export function formattedFileSize(file_size: number,): string {
     return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
-export function formattedAppIconUrl(app_icon_path: string): string {
+export function formattedAppIconUrl(app_icon_path: string, baseUrl = ""): string {
     const iconPath = app_icon_path?.trim();
     if (!iconPath) return "";
     if (/^https?:\/\//i.test(iconPath)) return iconPath;
-    return `${iconServerUrl}${iconPath.startsWith("/") ? iconPath : `/${iconPath}`}`;
+    return `${baseUrl}${iconPath.startsWith("/") ? iconPath : `/${iconPath}`}`;
 }

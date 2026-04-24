@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
     ssr: false,
     compatibilityDate: '2025-07-15',
-    devtools: {enabled: true},
+    devtools: {enabled: import.meta.dev},
     modules: ['@nuxt/ui',],
     css: ['~/assets/css/main.css'],
     fonts: {
@@ -23,7 +23,7 @@ export default defineNuxtConfig({
         }
     },
     sourcemap: {
-        server: true,
-        client: true
+        server: import.meta.dev,
+        client: import.meta.dev
     }
 })

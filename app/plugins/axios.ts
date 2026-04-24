@@ -1,17 +1,129 @@
-// plugins/axios.ts
-
 import type { InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 import type { BaseResp } from "~/types/base_response";
 import type { RefreshTokenResp } from "~/types/user";
 
-function removeTokenAndToLogin() {
-	localStorage.removeItem("access_token");
-	localStorage.removeItem("refresh_token");
-	window.location.href = "/login";
+const REFRESH_TOKEN_PATH = "/public/users/refresh_token";
+const ACCESS_TOKEN_ERROR_CODES = new Set([
+	"ACCESS_TOKEN_MISSING",
+	"ACCESS_TOKEN_INVALID",
+	"ACCESS_TOKEN_EXPIRED",
+	"ACCESS_TOKEN_REVOKED",
+]);
+const REFRESH_TOKEN_INVALID_CODE = "REFRESH_TOKEN_INVALID";
+const FORBIDDEN_CODE = "FORBIDDEN";
+
+function isTimeoutError(err: unknown) {
+	return (
+		typeof err === "object" &&
+		err !== null &&
+		("code" in err || "message" in err) &&
+		((err as { code?: string }).code === "ECONNABORTED" ||
+			typeof (err as { message?: string }).message === "string" &&
+				(err as { message: string }).message.includes("timeout"))
+	);
+}
+
+function isRefreshTokenRequest(config?: InternalAxiosRequestConfig) {
+	const url = config?.url || "";
+	return url.includes(REFRESH_TOKEN_PATH);
+}
+
+function shouldRefreshFromResponse(resp?: BaseResp<unknown>) {
+	return resp?.code === 401 && Boolean(resp.err_code && ACCESS_TOKEN_ERROR_CODES.has(resp.err_code));
+}
+
+function shouldLogoutFromResponse(resp?: BaseResp<unknown>) {
+	return resp?.code === 401 && resp.err_code === REFRESH_TOKEN_INVALID_CODE;
+}
+
+function shouldShowForbidden(resp?: BaseResp<unknown>) {
+	return resp?.code === 403 && resp.err_code === FORBIDDEN_CODE;
 }
 
 export default defineNuxtPlugin(() => {
+	const { accessToken, clearSession, refreshToken, syncFromStorage, userInfo, setTokens } =
+		useUserSession();
+	let refreshTokenRequest: Promise<string> | null = null;
+	let logoutRedirectTimer: ReturnType<typeof setTimeout> | null = null;
+
+	syncFromStorage();
+
+	function clearSessionAndToLogin(message = "登录已过期，请重新登录") {
+		clearSession();
+		toast.warning("登录状态失效", message);
+		if (window.location.pathname !== "/login" && !logoutRedirectTimer) {
+			logoutRedirectTimer = setTimeout(() => {
+				logoutRedirectTimer = null;
+				void navigateTo("/login", { replace: true });
+			}, 1200);
+		}
+	}
+
+	async function tryRefreshToken() {
+		if (!refreshToken.value) {
+			clearSessionAndToLogin("登录信息缺失，请重新登录");
+			throw new Error("缺少 refresh_token");
+		}
+
+		if (!refreshTokenRequest) {
+			refreshTokenRequest = refreshApi
+				.post<BaseResp<RefreshTokenResp>>(REFRESH_TOKEN_PATH, {
+					user_id: String(userInfo.value?.id || ""),
+					refresh_token: refreshToken.value,
+				})
+				.then((res) => {
+					if (
+						res.data.code !== 200 ||
+						!res.data.data?.access_token ||
+						!res.data.data?.refresh_token
+					) {
+						throw new Error(res.data.msg || "刷新登录态失败");
+					}
+
+					setTokens(
+						res.data.data.access_token,
+						res.data.data.refresh_token,
+					);
+					return res.data.data.access_token;
+				})
+				.finally(() => {
+					refreshTokenRequest = null;
+				});
+		}
+
+		return refreshTokenRequest;
+	}
+
+	async function handleUnauthorizedResponse(
+		resp: BaseResp<unknown> | undefined,
+		originalRequest?: InternalAxiosRequestConfig & { _retry?: boolean },
+	) {
+		if (!resp) {
+			return null;
+		}
+
+		if (shouldLogoutFromResponse(resp) || isRefreshTokenRequest(originalRequest)) {
+			clearSessionAndToLogin(resp.msg || "登录已过期，请重新登录");
+			throw new Error(resp.msg || "登录状态失效");
+		}
+
+		if (!shouldRefreshFromResponse(resp)) {
+			return null;
+		}
+
+		if (!originalRequest || originalRequest._retry) {
+			clearSessionAndToLogin(resp.msg || "登录已过期，请重新登录");
+			throw new Error(resp.msg || "登录状态失效");
+		}
+
+		originalRequest._retry = true;
+		const nextAccessToken = await tryRefreshToken();
+		originalRequest.headers = originalRequest.headers || {};
+		originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`;
+		return api(originalRequest);
+	}
+
 	const refreshApi = axios.create({
 		baseURL: "/api",
 		timeout: 10000,
@@ -20,13 +132,13 @@ export default defineNuxtPlugin(() => {
 	refreshApi.interceptors.response.use(
 		(res) => res,
 		(err) => {
-			// 处理超时错误
-			if (err.code === "ECONNABORTED" || err.message.includes("timeout")) {
+			const resp = err?.response?.data as BaseResp<unknown> | undefined;
+
+			if (isTimeoutError(err)) {
 				toast.error("请求超时", "网络连接超时，请检查网络后重试");
 			}
-			// 常见：token 过期/无效
-			if (err?.response?.status === 401) {
-				removeTokenAndToLogin();
+			if (shouldLogoutFromResponse(resp) || err?.response?.status === 401) {
+				clearSessionAndToLogin();
 			}
 			return Promise.reject(err);
 		},
@@ -38,66 +150,57 @@ export default defineNuxtPlugin(() => {
 	});
 
 	api.interceptors.request.use((req) => {
-		const access_token = localStorage.getItem("access_token");
-		if (access_token) {
+		if (accessToken.value) {
 			req.headers = req.headers || {};
-			req.headers.Authorization = `Bearer ${access_token}`;
+			req.headers.Authorization = `Bearer ${accessToken.value}`;
 		}
 		return req;
 	});
 
 	api.interceptors.response.use(
-		(res) => res,
+		async (res) => {
+			const retriedResponse = await handleUnauthorizedResponse(
+				res.data as BaseResp<unknown>,
+				res.config as InternalAxiosRequestConfig & { _retry?: boolean },
+			);
+			if (retriedResponse) {
+				return retriedResponse;
+			}
+
+			if (shouldShowForbidden(res.data as BaseResp<unknown>)) {
+				toast.error("请求被拒绝", res.data.msg || "当前账号没有权限执行该操作");
+			}
+
+			return res;
+		},
 		async (err) => {
-			// 处理超时错误
-			if (err.code === "ECONNABORTED" || err.message.includes("timeout")) {
+			const originalRequest = err.config as
+				| (InternalAxiosRequestConfig & { _retry?: boolean })
+				| undefined;
+			const resp = err?.response?.data as BaseResp<unknown> | undefined;
+
+			if (isTimeoutError(err)) {
 				toast.error("请求超时", "网络连接超时，请检查网络后重试");
 			}
-			// 常见：token 过期/无效
-			if (err?.response?.status === 401) {
-				removeTokenAndToLogin();
-			} else if (err?.response?.status === 403) {
-				const originalRequest = err.config as
-					| (InternalAxiosRequestConfig & { _retry?: boolean })
-					| undefined;
-				if (!originalRequest || originalRequest._retry) {
-					return Promise.reject(err);
-				}
 
-				const refresh_token = localStorage.getItem("refresh_token");
-				if (refresh_token) {
-					const user_id = JSON.parse(
-						localStorage.getItem("user_info") || "{}",
-					)?.id;
-					originalRequest._retry = true;
-
-					try {
-						const res = await refreshApi.post<BaseResp<RefreshTokenResp>>(
-							"/public/users/refresh_token",
-							{
-								user_id,
-								refresh_token,
-							},
-						);
-
-						if (res.data.code !== 200) {
-							removeTokenAndToLogin();
-							return Promise.reject(err);
-						}
-
-						localStorage.setItem("access_token", res.data.data.access_token);
-						localStorage.setItem("refresh_token", res.data.data.refresh_token);
-						originalRequest.headers = originalRequest.headers || {};
-						originalRequest.headers.Authorization = `Bearer ${res.data.data.access_token}`;
-						return api(originalRequest);
-					} catch (refreshErr) {
-						removeTokenAndToLogin();
-						return Promise.reject(refreshErr);
+			if (resp?.code === 401 || err?.response?.status === 401) {
+				try {
+					const retriedResponse = await handleUnauthorizedResponse(
+						resp,
+						originalRequest,
+					);
+					if (retriedResponse) {
+						return retriedResponse;
 					}
-				} else {
-					removeTokenAndToLogin();
+				} catch (refreshErr) {
+					return Promise.reject(refreshErr);
 				}
 			}
+
+			if (shouldShowForbidden(resp) || err?.response?.status === 403) {
+				toast.error("请求被拒绝", resp?.msg || "当前账号没有权限执行该操作");
+			}
+
 			return Promise.reject(err);
 		},
 	);

@@ -52,21 +52,14 @@
 
 
 <script setup lang="ts">
+const { userInfo, clearSession, syncFromStorage } = useUserSession()
 
-const username = ref('用户')
+const username = computed(() => {
+  return String(userInfo.value?.username || userInfo.value?.name || '用户')
+})
 
-// 从localStorage获取用户名
 onMounted(() => {
-  try {
-    const userInfoStr = localStorage.getItem('user_info')
-    if (userInfoStr) {
-      const userInfo = JSON.parse(userInfoStr)
-      // 根据实际数据结构调整用户名获取方式
-      username.value = userInfo.username || userInfo.name || '用户'
-    }
-  } catch (error) {
-    console.error('获取用户信息失败:', error)
-  }
+  syncFromStorage()
 })
 
 
@@ -107,9 +100,7 @@ const menu: MenuItem[] = [
 ]
 
 async function _logout() {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
-  localStorage.removeItem('user_info')
+  clearSession()
   await navigateTo('/login', {replace: true})
 }
 

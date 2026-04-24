@@ -2,5 +2,6 @@
 export type BaseResp<T> = {
     data: T
     code: number
+    err_code?: string
     msg: string
 }

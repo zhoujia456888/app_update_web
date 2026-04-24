@@ -30,7 +30,7 @@
                         v-model="form.password"
                         size="lg"
                         class="w-full"
-                        :type="_showPwd ? 'text' : 'password'"
+                        :type="showPwd ? 'text' : 'password'"
                         placeholder="请输入密码"
                         autocomplete="current-password"
                     >
@@ -43,11 +43,11 @@
                                 color="neutral"
                                 variant="ghost"
                                 :icon="
-                                    _showPwd
+                                    showPwd
                                         ? 'i-lucide-eye-off'
                                         : 'i-lucide-eye'
                                 "
-                                @click="_showPwd = !_showPwd"
+                                @click="showPwd = !showPwd"
                             />
                         </template>
                     </UInput>
@@ -128,6 +128,7 @@ import { getHttpErrorMessage } from "~/utils/http_error";
 //登录页面不使用默认布局
 definePageMeta({ layout: false });
 const api = user_api();
+const { setTokens, setUserInfo } = useUserSession();
 
 const showPwd = ref(false);
 const loading = ref(false);
@@ -196,16 +197,14 @@ async function _onLogin() {
 
 		if (res.data.code !== 200) {
 			toast.error("登录失败", res.data.msg || "登录失败");
+			await refreshCaptcha();
 			return;
 		}
 
-		// 登录成功后，将 access_token 和 refresh_token 存储到 localStorage
-		localStorage.setItem("access_token", res.data.data.access_token);
-		localStorage.setItem("refresh_token", res.data.data.refresh_token);
+		setTokens(res.data.data.access_token, res.data.data.refresh_token);
 
-		await getUserInfo(res);
+		await getUserInfo(res, setUserInfo);
 	} catch (error: unknown) {
-		console.log(error);
 		const errorMessage = getHttpErrorMessage(error, "登录失败");
 		toast.error("登录失败", errorMessage);
 		await refreshCaptcha();
@@ -214,9 +213,13 @@ async function _onLogin() {
 	}
 }
 
-async function getUserInfo(loginRes: AxiosResponse) {
+async function getUserInfo(
+	loginRes: AxiosResponse,
+	setUserInfo: ReturnType<typeof useUserSession>["setUserInfo"],
+) {
 	const userInfoRes = await api.getUserInfo();
 	if (userInfoRes.data.code !== 200) {
+		setUserInfo(null);
 		toast.error(
 			"获取用户信息失败,请重试!",
 			userInfoRes.data.msg || "获取用户信息失败,请重试!",
@@ -224,7 +227,7 @@ async function getUserInfo(loginRes: AxiosResponse) {
 		return;
 	}
 	// 登录成功后，将用户信息存储到 localStorage
-	localStorage.setItem("user_info", JSON.stringify(userInfoRes.data.data));
+	setUserInfo(userInfoRes.data.data);
 	toast.success("登录成功", loginRes.data.data.login_info || "登录成功");
 	// 使用 replace: true 确保路由正确跳转
 	await navigateTo("/", { replace: true });

@@ -80,8 +80,8 @@
                   class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[30px] border border-white/80 bg-gradient-to-br from-slate-950 via-slate-800 to-amber-500 shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
                 >
                   <img
-                    v-if="formattedAppIconUrl(appInfo.app_icon_path)"
-                    :src="formattedAppIconUrl(appInfo.app_icon_path)"
+                    v-if="formattedAppIconUrl(appInfo.app_icon_path, config.public.apiBase)"
+                    :src="formattedAppIconUrl(appInfo.app_icon_path, config.public.apiBase)"
                     :alt="appInfo.app_name || 'APP图标'"
                     class="h-full w-full object-cover"
                   />

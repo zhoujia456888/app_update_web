@@ -2,24 +2,11 @@ import { useToast } from "#imports";
 
 // toast.ts
 type ToastId = string | number;
-
-type ToastOptions = {
-  title?: string;
-  description?: string;
-  color?: string;
-  duration?: number;
-  [key: string]: unknown;
-};
-
-type ToastInstance = {
-  id: ToastId;
-  [key: string]: unknown;
-};
-
 type ToastApi = ReturnType<typeof useToast>;
+type ToastOptions = Parameters<ToastApi["add"]>[0];
 
 let toastApi: ToastApi | null = null;
-const DEFAULT_DURATION = 3000;
+const DEFAULT_DURATION = 5000;
 const toastTimers = new Map<ToastId, ReturnType<typeof setTimeout>>();
 
 export function setToastApi(api: ToastApi) {
@@ -46,7 +33,7 @@ function clearToastTimer(id: ToastId) {
 
 function addToast(options: ToastOptions) {
   const api = ensureToast();
-  const duration = DEFAULT_DURATION;
+  const duration = options.duration ?? DEFAULT_DURATION;
   const toast = api.add({
     duration,
     ...options,

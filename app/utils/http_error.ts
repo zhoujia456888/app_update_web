@@ -7,6 +7,7 @@ type ErrorResponse = {
 };
 
 type HttpErrorLike = {
+	message?: string;
 	response?: ErrorResponse;
 };
 
@@ -18,6 +19,11 @@ export function getHttpErrorMessage(
 
 	if (typeof message === "string" && message.trim()) {
 		return message;
+	}
+
+	const genericMessage = (error as HttpErrorLike).message;
+	if (typeof genericMessage === "string" && genericMessage.trim()) {
+		return genericMessage;
 	}
 
 	return fallbackMessage;
