@@ -1,0 +1,10 @@
+services:
+  app_update_web:
+    container_name: app_update_web
+    image: app_update_web:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5802:5802"
+    restart: unless-stopped
