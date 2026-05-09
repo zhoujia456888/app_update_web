@@ -3,12 +3,14 @@
 /** 创建应用渠道请求参数 */
 export type CreateAppChannelReq = {
     channel_name: string
+    remark: string
 }
 
 
 /** 创建应用渠道返回参数 */
 export type CreateAppChannelResp = {
     channel_name: string
+    remark: string
     create_info: string
 }
 
@@ -31,6 +33,7 @@ export type GetAppChannelListResp = {
 export type GetAppChannelListRespItem = {
     channel_id: string
     channel_name: string
+    remark: string
     create_time: string
     update_time: string
 }
@@ -40,12 +43,14 @@ export type GetAppChannelListRespItem = {
 export type UpdateAppChannelReq = {
     channel_id: string
     channel_name: string
+    remark: string
 }
 
 /***更新应用渠道返回参数 */
 export type UpdateAppChannelResp = {
     channel_id: string
     channel_name: string
+    remark: string
     update_info: string
 }
 

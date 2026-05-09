@@ -13,10 +13,10 @@
       </div>
       <div class="flex flex-1 flex-col gap-4 py-4">
         <div
-            class="grid grid-cols-[1.2fr_1.4fr_1.4fr_1.4fr_160px] gap-4"
+            class="grid grid-cols-[1.1fr_1.2fr_1.6fr_1.3fr_1.3fr_160px] gap-4"
         >
           <USkeleton
-              v-for="item in 5"
+              v-for="item in 6"
               :key="`channel-header-${item}`"
               class="h-5 w-full"
           />
@@ -24,7 +24,7 @@
         <div
             v-for="row in 5"
             :key="`channel-row-${row}`"
-            class="grid grid-cols-[1.2fr_1.4fr_1.4fr_1.4fr_160px] items-center gap-4 rounded-lg border border-default px-4 py-5"
+            class="grid grid-cols-[1.1fr_1.2fr_1.6fr_1.3fr_1.3fr_160px] items-center gap-4 rounded-lg border border-default px-4 py-5"
         >
           <USkeleton class="h-5 w-3/4"/>
           <USkeleton class="h-5 w-4/5"/>
@@ -186,12 +186,21 @@
       :ui="{ footer: 'justify-end' }"
   >
     <template #body>
-      <UInput
-          class="w-full"
-          v-model="channelName"
-          label="渠道名称"
-          placeholder="请输入渠道名称"
-      />
+      <div class="space-y-4">
+        <UInput
+            class="w-full"
+            v-model="channelName"
+            label="渠道名称"
+            placeholder="请输入渠道名称"
+        />
+        <UTextarea
+            v-model="channelRemark"
+            label="渠道备注"
+            placeholder="请输入渠道备注"
+            :rows="4"
+            class="w-full"
+        />
+      </div>
     </template>
 
     <template #footer="{ close }">
@@ -252,6 +261,7 @@ const showInputAppChannelNameModal = ref(false);
 const isAddChannelModal = ref(true);
 const updateAppChannelObj = ref<GetAppChannelListRespItem>();
 const channelName = ref("");
+const channelRemark = ref("");
 const api = app_channel_api();
 const appChannelList = ref<GetAppChannelListRespItem[]>([]);
 const _isInitialLoading = ref(true);
@@ -293,6 +303,11 @@ const _columns: TableColumn<GetAppChannelListRespItem>[] = [
     accessorKey: "channel_name",
     header: "渠道名称",
     cell: ({row}) => `${row.getValue("channel_name")}`,
+  },
+  {
+    accessorKey: "remark",
+    header: "渠道备注",
+    cell: ({row}) => `${row.getValue("remark") || "-"}`,
   },
   {
     accessorKey: "create_time",
@@ -352,8 +367,10 @@ async function getAppChannelList() {
 
 async function _showAddAppChannelModal() {
   channelName.value = "";
+  channelRemark.value = "";
   showInputAppChannelNameModal.value = true;
   isAddChannelModal.value = true;
+  updateAppChannelObj.value = undefined;
 }
 
 function _searchAppChannelList() {
@@ -389,6 +406,7 @@ async function _createAppChannel() {
   try {
     const res = await api.create_app_channel({
       channel_name: channelName.value,
+      remark: channelRemark.value.trim(),
     });
     if (res.data.code !== 200) {
       toast.error("创建渠道失败", res.data.msg || "创建渠道失败");
@@ -401,6 +419,7 @@ async function _createAppChannel() {
     await getAppChannelList();
     showInputAppChannelNameModal.value = false;
     channelName.value = "";
+    channelRemark.value = "";
   } catch (error: unknown) {
     const errorMessage = getHttpErrorMessage(error, "创建渠道失败");
     toast.error("创建渠道失败", errorMessage);
@@ -411,6 +430,7 @@ async function _createAppChannel() {
 async function _showEditAppChannelModal(appChannel: GetAppChannelListRespItem) {
   isAddChannelModal.value = false;
   channelName.value = appChannel.channel_name;
+  channelRemark.value = appChannel.remark || "";
   showInputAppChannelNameModal.value = true;
   updateAppChannelObj.value = appChannel;
 }
@@ -424,6 +444,7 @@ async function _updateAppChannel() {
     const res = await api.update_app_channel({
       channel_id: updateAppChannelObj.value?.channel_id || "",
       channel_name: channelName.value,
+      remark: channelRemark.value.trim(),
     });
     if (res.data.code !== 200) {
       toast.error("更新渠道失败", res.data.msg || "更新渠道失败");
@@ -436,6 +457,7 @@ async function _updateAppChannel() {
     await getAppChannelList();
     showInputAppChannelNameModal.value = false;
     channelName.value = "";
+    channelRemark.value = "";
     updateAppChannelObj.value = undefined;
   } catch (error: unknown) {
     console.log(error);

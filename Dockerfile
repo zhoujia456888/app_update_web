@@ -1,6 +1,7 @@
-FROM node:24-bookworm-slim AS build
+FROM node:24.15.0-bookworm-slim AS build
 
 WORKDIR /app
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -9,11 +10,12 @@ COPY . .
 RUN npm run build
 
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24.15.0-bookworm-slim AS runtime
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 ENV NITRO_HOST=0.0.0.0
 ENV NITRO_PORT=5802
 

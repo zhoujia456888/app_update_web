@@ -106,7 +106,9 @@ runtimeConfig: {
 }
 ```
 
-开发代理配置：
+Axios 会优先使用 `runtimeConfig.public.apiBase` 直连后端（即 `${apiBase}/api`）；如果未配置则退回相对路径 `/api`，可配合 Nuxt/Nitro 或 Nginx 进行反向代理转发（见下方配置）。
+
+开发代理配置（`nuxt dev` 时生效）：
 
 ```ts
 nitro: {
@@ -119,10 +121,28 @@ nitro: {
 }
 ```
 
+生产代理配置（`nuxt build` + `node .output/server/index.mjs` 时生效）：
+
+```ts
+nitro: {
+  routeRules: {
+    '/api/**': {
+      proxy: 'http://localhost:5800/api/**'
+    }
+  }
+}
+```
+
 如果后端地址变更，通常需要同步修改：
 
 - `runtimeConfig.public.apiBase`
 - `nitro.devProxy['/api'].target`
+- `nitro.routeRules['/api/**'].proxy`
+
+也可以直接通过环境变量覆盖（推荐部署时使用）：
+
+- Linux/macOS：`export NUXT_PUBLIC_API_BASE=http://127.0.0.1:5800`
+- PowerShell：`$env:NUXT_PUBLIC_API_BASE="http://127.0.0.1:5800"`
 
 ### 全局样式
 

@@ -134,8 +134,8 @@
                     class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-default bg-elevated"
                 >
                   <img
-                      v-if="formattedAppIconUrl(row.original.app_icon_path?.trim() || '', config.public.apiBase)"
-                      :src="formattedAppIconUrl(row.original.app_icon_path?.trim() || '', config.public.apiBase)"
+                      v-if="formattedAppIconUrl(row.original.app_icon_path?.trim() || '')"
+                      :src="formattedAppIconUrl(row.original.app_icon_path?.trim() || '')"
                       :alt="row.original.app_icon_path || 'APP图标'"
                       class="h-full w-full object-cover"
                   />
@@ -215,8 +215,8 @@
               class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-default bg-default"
           >
             <img
-                v-if="formattedAppIconUrl(appInfoObj.app_icon_path || '', config.public.apiBase)"
-                :src="formattedAppIconUrl(appInfoObj.app_icon_path || '', config.public.apiBase)"
+                v-if="formattedAppIconUrl(appInfoObj.app_icon_path || '')"
+                :src="formattedAppIconUrl(appInfoObj.app_icon_path || '')"
                 :alt="appInfoObj.app_name || 'APP图标'"
                 class="h-full w-full object-cover"
             />
@@ -305,7 +305,6 @@ import {formattedAppIconUrl, formattedFileSize, formatDateTime} from "~/utils/ap
 
 
 const api = app_manage_api();
-const config = useRuntimeConfig();
 const appList = ref<GetAppListRespItem[]>([]);
 const totalAppCount = ref(0);
 const pageIndex = ref(0);

@@ -2,9 +2,22 @@ services:
   app_update_web:
     container_name: app_update_web
     image: app_update_web:latest
+    pull_policy: build
     build:
       context: .
       dockerfile: Dockerfile
+      pull: true
+      no_cache: true
+    environment:
+      # 后端地址仅供 Nuxt 容器内反向代理使用，浏览器统一访问当前站点的 /api
+      # 这里不要带 /api 前缀；默认使用同一 Docker 网络中的后端服务名
+      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://app_update_service:5800}
     ports:
       - "5802:5802"
+    networks:
+      - app_update_net
     restart: unless-stopped
+
+networks:
+  app_update_net:
+    name: ${APP_UPDATE_DOCKER_NETWORK:-app_update_net}

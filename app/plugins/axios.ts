@@ -42,6 +42,8 @@ function shouldShowForbidden(resp?: BaseResp<unknown>) {
 }
 
 export default defineNuxtPlugin(() => {
+	const resolvedApiBaseURL = "/api";
+
 	const { accessToken, clearSession, refreshToken, syncFromStorage, userInfo, setTokens } =
 		useUserSession();
 	let refreshTokenRequest: Promise<string> | null = null;
@@ -125,7 +127,7 @@ export default defineNuxtPlugin(() => {
 	}
 
 	const refreshApi = axios.create({
-		baseURL: "/api",
+		baseURL: resolvedApiBaseURL,
 		timeout: 10000,
 	});
 
@@ -145,7 +147,7 @@ export default defineNuxtPlugin(() => {
 	);
 
 	const api = axios.create({
-		baseURL: "/api",
+		baseURL: resolvedApiBaseURL,
 		timeout: 10000,
 	});
 
