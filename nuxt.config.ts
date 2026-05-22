@@ -4,11 +4,15 @@
 // 注意：这里不要带 /api 前缀。
 // PowerShell: $env:NUXT_PUBLIC_API_BASE="http://127.0.0.1:5800"
 // Docker: -e NUXT_PUBLIC_API_BASE=http://app_update_service:5800
-const apiBase = process.env.NUXT_PUBLIC_API_BASE || 'http://app_update_service:5800'
+const apiBase = process.env.NUXT_PUBLIC_API_BASE ||
+    (process.env.NODE_ENV === 'production' ? 'http://app_update_service:5800' : 'http://127.0.0.1:5800')
 
 export default defineNuxtConfig({
     ssr: false,
     compatibilityDate: '2025-07-15',
+    experimental: {
+        viteEnvironmentApi: true,
+    },
     devtools: {enabled: import.meta.dev},
     modules: ['@nuxt/ui',],
     css: ['~/assets/css/main.css'],

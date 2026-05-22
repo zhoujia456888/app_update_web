@@ -36,8 +36,8 @@
 
 ## 环境要求
 
-- Node.js 18+
-- npm 9+
+- Bun 1.x
+- Docker 24+ 与 Docker Compose
 - 可用的后端服务，需提供用户、渠道、App、上传、下载等接口
 
 ## 快速开始
@@ -45,42 +45,48 @@
 ### 安装依赖
 
 ```bash
-npm install
+bun install
 ```
 
 ### 启动开发环境
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 默认访问地址：
 
 ```text
-http://localhost:3000
+http://localhost:5802
 ```
 
 ### 构建生产版本
 
 ```bash
-npm run build
+bun run build
 ```
 
 ### 预览生产构建
 
 ```bash
-npm run preview
+bun run preview
+```
+
+### 重新安装并刷新 Nuxt 生成文件
+
+```bash
+bun run rebuild
 ```
 
 ## 可用脚本
 
 ```bash
-npm run dev
-npm run build
-npm run preview
-npm run generate
-npm run clean
-npm run rebuild
+bun run dev
+bun run build
+bun run preview
+bun run generate
+bun run clean
+bun run rebuild
 ```
 
 - `dev`：启动开发服务器
@@ -121,7 +127,7 @@ nitro: {
 }
 ```
 
-生产代理配置（`nuxt build` + `node .output/server/index.mjs` 时生效）：
+生产代理配置（`nuxt build` + `bun .output/server/index.mjs` 时生效）：
 
 ```ts
 nitro: {
@@ -143,6 +149,70 @@ nitro: {
 
 - Linux/macOS：`export NUXT_PUBLIC_API_BASE=http://127.0.0.1:5800`
 - PowerShell：`$env:NUXT_PUBLIC_API_BASE="http://127.0.0.1:5800"`
+
+## Docker 部署
+
+### 1. 准备环境变量
+
+项目已提供示例文件 [`.env.example`](D:/CodeRepository/VueProject/app_update_web/.env.example:1)。
+
+如果你使用 Docker Compose，建议先复制为 `.env` 并按实际环境修改：
+
+```bash
+cp .env.example .env
+```
+
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+关键变量：
+
+- `NUXT_PUBLIC_API_BASE`：Nuxt 容器内访问后端服务的地址，不要带 `/api`
+- `APP_UPDATE_DOCKER_NETWORK`：Compose 使用的 Docker 网络名称
+
+默认情况下，前端容器会把浏览器请求到本站点 `/api` 的流量代理到 `http://app_update_service:5800/api`。
+
+### 2. 构建并启动容器
+
+```bash
+docker compose up -d --build
+```
+
+默认暴露端口：
+
+```text
+http://localhost:5802
+```
+
+### 3. 停止与重建
+
+停止：
+
+```bash
+docker compose down
+```
+
+重新构建并启动：
+
+```bash
+docker compose up -d --build --force-recreate
+```
+
+### 4. 查看日志
+
+```bash
+docker compose logs -f app_update_web
+```
+
+### 部署约束
+
+- 当前 [Dockerfile](D:/CodeRepository/VueProject/app_update_web/Dockerfile:1) 已完全切换到 Bun 镜像与 Bun 运行时
+- 当前仓库尚未提交 `bun.lock`，因此镜像构建时依赖解析仍以 `package.json` 为准
+- 等本机 Bun 可用后，建议执行 `bun install` 生成并提交 `bun.lock`，这样 Docker 构建会更可重复
+- 生产环境浏览器只访问当前站点和其 `/api`，不要把后端服务地址直接暴露给浏览器端代码
 
 ### 全局样式
 
@@ -225,3 +295,4 @@ package.json             # 脚本与依赖
 - 当前仓库是前端项目，业务能力依赖后端接口实现
 - 开发阶段主要通过 `/api` 代理转发到本地后端
 - 如果你准备部署到生产环境，建议额外补充环境变量与部署说明
+- 当前仓库已切换为 Bun 包管理与运行时，首次拉取后请先执行 `bun install`

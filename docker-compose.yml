@@ -9,9 +9,13 @@ services:
       pull: true
       no_cache: true
     environment:
+      NODE_ENV: production
+      NITRO_HOST: 0.0.0.0
+      NITRO_PORT: 5802
       # 后端地址仅供 Nuxt 容器内反向代理使用，浏览器统一访问当前站点的 /api
       # 这里不要带 /api 前缀；默认使用同一 Docker 网络中的后端服务名
-      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://app_update_service:5800}
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://app_update_service:5800}
+    init: true
     ports:
       - "5802:5802"
     networks:

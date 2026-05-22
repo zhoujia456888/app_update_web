@@ -8,8 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "clean": "rmdir /s /q .nuxt 2>nul & rmdir /s /q .nitro 2>nul",
-    "rebuild": "npm run clean && npm run postinstall"
+    "clean": "bun -e \"import { rm } from 'node:fs/promises'; await Promise.all(['.nuxt', '.nitro'].map((dir) => rm(dir, { recursive: true, force: true })))\"",
+    "rebuild": "bun run clean && bun run postinstall"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.87",
