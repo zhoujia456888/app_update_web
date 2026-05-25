@@ -24,4 +24,5 @@ services:
 
 networks:
   app_update_net:
+    external: true
     name: ${APP_UPDATE_DOCKER_NETWORK:-app_update_net}
