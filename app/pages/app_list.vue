@@ -349,6 +349,8 @@ const appInfoItems = computed(() => {
     {label: "上传时间", value: formatDateTime(appInfoObj.value.create_time)},
     {label: "更新时间", value: formatDateTime(appInfoObj.value.update_time)},
     {label: "更新日志", value: appInfoObj.value.update_log},
+    {label: "md5", value: appInfoObj.value.file_md5},
+    {label: "sha256", value: appInfoObj.value.file_sha256},
   ];
 });
 

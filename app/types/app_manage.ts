@@ -84,6 +84,8 @@ export type GetAppListRespItem = {
 	update_log: string;
 	create_time: string;
 	update_time: string;
+	file_md5: string;
+	file_sha256: string;
 };
 
 /** 获取 APP 详情返回参数 */
