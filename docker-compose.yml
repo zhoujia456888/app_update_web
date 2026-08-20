@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # 每次 up 都触发构建：源码未变化时命中 Docker 层缓存秒过，源码变化时自动重新构建
+    pull_policy: build
     environment:
       NODE_ENV: production
       NITRO_HOST: 0.0.0.0

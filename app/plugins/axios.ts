@@ -29,6 +29,11 @@ function isRefreshTokenRequest(config?: InternalAxiosRequestConfig) {
 	return url.includes(REFRESH_TOKEN_PATH);
 }
 
+function isPublicRequest(config?: InternalAxiosRequestConfig) {
+	const url = config?.url || "";
+	return url.includes("/public/");
+}
+
 function shouldRefreshFromResponse(resp?: BaseResp<unknown>) {
 	return resp?.code === 401 && Boolean(resp.err_code && ACCESS_TOKEN_ERROR_CODES.has(resp.err_code));
 }
@@ -102,6 +107,11 @@ export default defineNuxtPlugin(() => {
 		originalRequest?: InternalAxiosRequestConfig & { _retry?: boolean },
 	) {
 		if (!resp) {
+			return null;
+		}
+
+		// 公开接口（/public/**）不需要 Token，即使返回 401 也不应触发刷新 token 或跳转登录
+		if (isPublicRequest(originalRequest)) {
 			return null;
 		}
 

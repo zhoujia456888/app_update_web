@@ -9,8 +9,9 @@ export default defineNuxtRouteMiddleware((to) => {
 
     const isLoginPage = to.path === '/login'
     const isRegisterPage = to.path === '/register'
+    const isAppDownloadPage = to.path === '/app_download'
 
-    if (!accessToken.value && !isLoginPage && !isRegisterPage) {
+    if (!accessToken.value && !isLoginPage && !isRegisterPage && !isAppDownloadPage) {
         return navigateTo('/login')
     }
 
