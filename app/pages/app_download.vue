@@ -116,7 +116,7 @@
                     <div class="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
                       {{ item.label }}
                     </div>
-                    <div class="mt-2 text-base font-semibold text-slate-950">
+                    <div class="mt-2 min-w-0 break-all text-base font-semibold leading-snug text-slate-950">
                       {{ item.value }}
                     </div>
                   </div>
