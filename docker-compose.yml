@@ -2,21 +2,34 @@ services:
   app_update_web:
     container_name: app_update_web
     image: app_update_web:latest
+
     build:
       context: .
       dockerfile: Dockerfile
-    # 每次 up 都触发构建：源码未变化时命中 Docker 层缓存秒过，源码变化时自动重新构建
+
+    # 每次 docker compose up 都检查并构建镜像
+    # Docker 层缓存会避免无变化时重复执行耗时步骤
     pull_policy: build
+
     environment:
       NODE_ENV: production
+
+      # Nitro
       NITRO_HOST: 0.0.0.0
       NITRO_PORT: 5802
+
+      # Nuxt Runtime Config
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://app_update_service:5800}
+
     ports:
       - "5802:5802"
+
     networks:
       - app_update_net
+
     restart: unless-stopped
+
+    # 使用 tini 作为 PID 1
     init: true
 
 networks:
